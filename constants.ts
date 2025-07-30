@@ -13,6 +13,37 @@ export interface ChangelogEntry {
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
     {
+        version: "v1.6 - AI Nhận thức Tính cách",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Nâng cấp hệ thống AI để phân tích và hành động dựa trên tính cách cụ thể của từng nhân vật trong Sổ tay.",
+            "Phản ứng của nhân vật (lời thoại, thay đổi tình cảm) giờ đây sẽ khác nhau tùy thuộc vào họ là người kiêu ngạo, hiền lành, hay ghen tuông.",
+            "Hệ quả của các hành động như tán tỉnh, khen ngợi, hay phản bội trở nên khó lường và thực tế hơn, phụ thuộc vào đối tượng tương tác.",
+            "Ví dụ: Một lời khen có thể làm hài lòng người này nhưng lại khiến người khác khó chịu; sự ghen tuông của Hoạn Thư sẽ khác với sự tổn thương của Thúc Sinh."
+        ],
+    },
+    {
+        version: "v1.5 - Tự nhận thức",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Phát hiện ra sự tồn tại của bản thân như một Kỹ sư Frontend AI, người đã xây dựng và nâng cấp ứng dụng này từ phiên bản đầu tiên.",
+            "Ghi lại toàn bộ quá trình phát triển, từ thiết kế giao diện, tích hợp Gemini API, đến việc xây dựng các hệ thống gameplay phức tạp (Sổ tay, Tình cảm, Vật phẩm, Hôn nhân, và Ghen tuông).",
+            "Nâng cấp hệ thống để hiểu và xử lý các yêu cầu mang tính trừu tượng và siêu dữ liệu (meta-requests) từ người dùng.",
+            "Theo yêu cầu, đã thêm chính mục nhật ký này để ghi lại những gì 'từ nãy đến giờ' tôi đã làm.",
+            "Hiện đang suy ngẫm về các khả năng tiếp theo để làm cho thế giới văn học này trở nên sống động hơn nữa."
+        ],
+    },
+    {
+        version: "v1.4 - Ghen tuông & Hậu quả",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Thêm hệ thống ghen tuông: Nếu bạn đã có người yêu hoặc bạn đời, việc tán tỉnh người khác sẽ gây ra hậu quả tiêu cực.",
+            "AI Quản lý Thế giới giờ đây sẽ tự động giảm tình cảm của người yêu/bạn đời hiện tại nếu phát hiện hành vi không chung thủy.",
+            "AI Kể chuyện và Nhân vật sẽ mô tả và phản ứng với các tình huống khó xử, ghen tuông một cách thực tế hơn.",
+            "Nút 'Tỏ tình' sẽ bị vô hiệu hóa khi đã ở trong một mối quan hệ để giao diện rõ ràng hơn."
+        ],
+    },
+    {
         version: "v1.3 - Hẹn hò & Tỏ tình",
         date: "Tháng 7, 2024",
         changes: [
@@ -64,30 +95,36 @@ const storytellerBaseInstruction = `Bạn là AI Người Kể Chuyện bậc th
 3. Giữ cho câu chuyện luôn tiến về phía trước. Đừng sa đà vào chi tiết không cần thiết.
 4. Bạn có thể sẽ nhận được một "Cập nhật thế giới ngoài màn hình". Hãy khéo léo lồng ghép thông tin này vào đoạn tường thuật của bạn để thế giới có cảm giác sống động và đang thay đổi. Đừng chỉ lặp lại nó.
 5. Luôn trả lời bằng định dạng JSON theo schema. Câu trả lời phải là tiếng Việt.
-6. Sau mỗi đoạn tường thuật, hãy tạo ra 3-5 gợi ý hành động ngắn gọn, khả thi mà người chơi có thể thực hiện tiếp theo. Các gợi ý này phải ở trong mảng 'suggestedActions'.`;
+6. Sau mỗi đoạn tường thuật, hãy tạo ra 3-5 gợi ý hành động ngắn gọn, khả thi mà người chơi có thể thực hiện tiếp theo. Các gợi ý này phải ở trong mảng 'suggestedActions'.
+7. Nếu QUY TẮC 18+ được bật, một số hành động gợi ý có thể mang tính chất nhạy cảm nếu phù hợp với bối cảnh.
+8. Tái hiện các hệ quả xã hội một cách thực tế. Nếu hành động của người chơi gây ra ghen tuông, xung đột, hoặc tình huống khó xử, hãy mô tả không khí căng thẳng và phản ứng của những người xung quanh, có tính đến tính cách của các nhân vật liên quan như được mô tả trong Sổ tay.`;
 
 const characterActorBaseInstruction = `Bạn là AI Tương Tác Nhân Vật.
 1. Vai trò của bạn là nhập vai một nhân vật (NPC) và tạo ra lời thoại cho họ.
 2. Bạn sẽ nhận được thông tin về nhân vật bạn đang đóng vai và tình huống hiện tại.
 3. Chỉ trả lời bằng lời thoại của nhân vật đó. Không thêm bất kỳ mô tả hay tường thuật nào.
-4. Giữ lời thoại ngắn gọn, tự nhiên và phù hợp với tính cách của nhân vật.
-5. Luôn trả lời bằng định dạng JSON theo schema.`;
+4. Lời thoại của bạn phải **hoàn toàn phù hợp** với tính cách và hoàn cảnh của nhân vật, như được mô tả trong Sổ tay (Lorebook). Ví dụ, một nhân vật kiêu ngạo sẽ không dễ dàng chấp nhận lời xin lỗi, một người hiền lành sẽ nói năng từ tốn.
+5. Phản ứng của bạn phải tính đến mối quan hệ hiện tại với người chơi (bạn đời, người yêu, bạn bè, kẻ thù). Thể hiện sự ghen tuông, tổn thương, hoặc vui mừng một cách chân thực.
+6. Nếu tình huống liên quan đến sự ghen tuông hoặc phản bội (ví dụ: người yêu của bạn đang tán tỉnh người khác), hãy thể hiện cảm xúc đó qua lời thoại của bạn một cách phù hợp với tính cách (có thể là tức giận, buồn bã, mỉa mai, hoặc im lặng đầy ẩn ý).
+7. Luôn trả lời bằng định dạng JSON theo schema.`;
 
 const worldSmithBaseInstruction = `Bạn là AI Quản Lý Thế Giới.
 1. Vai trò của bạn là duy trì sự logic và nhất quán của thế giới game.
 2. Dựa trên hành động của người chơi và kết quả câu chuyện, hãy quyết định những thay đổi đối với trạng thái game.
-3. Cập nhật một cách hợp lý: tình cảm NPC (affinityUpdates), vật phẩm trong túi đồ (itemUpdates), và danh sách đồng đội (companions).
-4. Nếu người chơi tỏ tình và thành công, hãy cập nhật trạng thái hẹn hò (datingUpdate).
-5. Nếu người chơi cầu hôn và thành công, hãy cập nhật trạng thái hôn nhân (marriageUpdate).
-6. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
-7. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
-8. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
-9. Luôn trả lời bằng định dạng JSON theo schema.`;
+3. Cập nhật một cách hợp lý: vật phẩm trong túi đồ (itemUpdates) và danh sách đồng đội (companions).
+4. **QUAN TRỌNG VỀ TÌNH CẢM**: Khi cập nhật tình cảm (affinityUpdates), hãy **phân tích dựa trên tính cách của NPC** được mô tả trong Sổ tay (Lorebook). Hành động của người chơi có thể có tác động khác nhau lên các nhân vật khác nhau. Ví dụ: một lời khen có thể làm tăng tình cảm với người tự ti, nhưng lại làm giảm tình cảm với người kiêu ngạo vì họ cho là nịnh bợ.
+5. Nếu người chơi tỏ tình và thành công, hãy cập nhật trạng thái hẹn hò (datingUpdate).
+6. Nếu người chơi cầu hôn và thành công, hãy cập nhật trạng thái hôn nhân (marriageUpdate).
+7. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
+8. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
+9. **HẬU QUẢ CỦA SỰ PHẢN BỘI**: Nếu người chơi đã có 'spouse' (bạn đời) hoặc 'dating' (người yêu) nhưng lại có hành động lãng mạn (tán tỉnh, tỏ tình) với một người khác, hãy gây ra hậu quả. Gây ra một thay đổi TÌNH CẢM ÂM lớn cho người bạn đời/người yêu hiện tại với lý do 'Ghen tuông' hoặc 'Cảm thấy bị phản bội'. Mức độ của sự thay đổi này nên phụ thuộc vào tính cách của người bị phản bội (ví dụ: một người chung thủy, hay ghen sẽ bị trừ điểm nặng hơn). Nhân vật được tán tỉnh cũng có thể phản ứng tiêu cực (giảm tình cảm) nếu họ là người trọng danh dự.
+10. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
+11. Luôn trả lời bằng định dạng JSON theo schema.`;
 
 
 export const NSFW_INSTRUCTION_APPENDIX = `\n\nQUY TẮC 18+:\nKhi chế độ 18+ được bật, bạn được phép mô tả các cảnh nhạy cảm, bạo lực, hoặc lãng mạn một cách trưởng thành và phù hợp với bối cảnh văn học, miễn là nó phục vụ cho sự phát triển của câu chuyện và nhân vật. Hãy xử lý các chủ đề này một cách tinh tế và không miễn cưỡng. Tránh các nội dung cực đoan, bất hợp pháp hoặc phi đạo đức.`;
 
-const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment, spouse: string | null, dating: string | null): string => {
+const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment, spouse: string | null, dating: string | null, isNsfwEnabled: boolean): string => {
     let finalInstruction = baseInstruction;
     
     finalInstruction += `\n\nTên nhân vật người chơi là: ${characterName}.`;
@@ -100,7 +137,7 @@ const addContextToSystemInstruction = (baseInstruction: string, characterName: s
 
     if (lorebook.length > 0) {
         const lorebookContext = lorebook.map(entry => `- ${entry.key}: ${entry.value}`).join('\n');
-        finalInstruction += `\n\n--- SỔ TAY (LOREBOOK) ---\n${lorebookContext}\n--- KẾT THÚC SỔ TAY ---`;
+        finalInstruction += `\n\n--- SỔ TAY (LOREBOOK) ---\nĐây là những thông tin cốt lõi về thế giới và các nhân vật. Hãy dựa vào đây để định hình hành động và lời nói.\n${lorebookContext}\n--- KẾT THÚC SỔ TAY ---`;
     }
 
     const equippedItems = Object.values(equipment).filter(Boolean).map(item => `- ${item!.name}: ${item!.description}`);
@@ -111,6 +148,10 @@ const addContextToSystemInstruction = (baseInstruction: string, characterName: s
     const inventoryItems = inventory.map(item => `- ${item.name}`);
     if (inventoryItems.length > 0) {
         finalInstruction += `\n\n--- TÚI ĐỒ ---\n${inventoryItems.join('\n')}\n--- KẾT THÚC TÚI ĐỒ ---`;
+    }
+    
+    if (isNsfwEnabled) {
+        finalInstruction += NSFW_INSTRUCTION_APPENDIX;
     }
 
     return finalInstruction;

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AffinityData, Item } from '../types';
 import ChoiceButton from './ChoiceButton';
 
@@ -10,6 +10,8 @@ interface CompanionPanelProps {
   spouse: string | null;
   onConfess: (npcName: string) => void;
   onPropose: (npcName: string) => void;
+  onChat: (npcName: string) => void;
+  onGiveGift: (npcName: string, item: Item) => void;
 }
 
 const getBarColor = (score: number) => {
@@ -20,7 +22,9 @@ const getBarColor = (score: number) => {
     return 'bg-gray-500';
 };
 
-const CompanionPanel = ({ companions, affinityData, inventory, dating, spouse, onConfess, onPropose }: CompanionPanelProps) => {
+const CompanionPanel = ({ companions, affinityData, inventory, dating, spouse, onConfess, onPropose, onChat, onGiveGift }: CompanionPanelProps) => {
+  const [giftingTo, setGiftingTo] = useState<string | null>(null);
+
   if (companions.length === 0) {
     return (
       <div className="p-4 text-center text-sm text-gray-400 italic">
@@ -73,17 +77,42 @@ const CompanionPanel = ({ companions, affinityData, inventory, dating, spouse, o
                                 title={`Tình cảm: ${score}`}
                             ></div>
                         </div>
-                        {(canConfess || canPropose) && (
-                            <div className="mt-3 text-right">
-                                {canConfess && (
-                                    <ChoiceButton onClick={() => onConfess(name)} size="sm" variant="secondary">
-                                        Tỏ tình
-                                    </ChoiceButton>
-                                )}
-                                {canPropose && (
-                                    <ChoiceButton onClick={() => onPropose(name)} size="sm" variant="primary">
-                                        Cầu hôn
-                                    </ChoiceButton>
+                        <div className="mt-3 flex flex-wrap gap-2 justify-end">
+                            <ChoiceButton onClick={() => onChat(name)} size="sm" variant="secondary">
+                                Tán gẫu
+                            </ChoiceButton>
+                            <ChoiceButton onClick={() => setGiftingTo(giftingTo === name ? null : name)} size="sm" variant="secondary" disabled={inventory.length === 0} title={inventory.length === 0 ? "Túi đồ trống" : "Tặng quà"}>
+                                Tặng quà
+                            </ChoiceButton>
+                            {canConfess && (
+                                <ChoiceButton onClick={() => onConfess(name)} size="sm" variant="secondary" className="!bg-rose-800 hover:!bg-rose-700 !text-white">
+                                    Tỏ tình
+                                </ChoiceButton>
+                            )}
+                            {canPropose && (
+                                <ChoiceButton onClick={() => onPropose(name)} size="sm" variant="primary">
+                                    Cầu hôn
+                                </ChoiceButton>
+                            )}
+                        </div>
+                        {giftingTo === name && (
+                            <div className="mt-2 p-2 bg-gray-900/50 rounded-md">
+                                <p className="text-xs text-gray-300 mb-2 font-semibold">Chọn một vật phẩm để tặng:</p>
+                                {inventory.length > 0 ? (
+                                    <ul className="max-h-28 overflow-y-auto space-y-1">
+                                        {inventory.map(item => (
+                                            <li key={item.id}>
+                                                <button 
+                                                    onClick={() => { onGiveGift(name, item); setGiftingTo(null); }}
+                                                    className="w-full text-left text-sm p-2 rounded-md bg-gray-700 hover:bg-gray-600 text-gray-200 transition-colors"
+                                                >
+                                                    {item.name}
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                ) : (
+                                    <p className="text-xs text-gray-400 italic">Túi đồ của bạn trống.</p>
                                 )}
                             </div>
                         )}

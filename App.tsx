@@ -140,7 +140,7 @@ const WorldCreatorScreen = ({ onSubmit, onBack }: { onSubmit: (data: { title: st
                 </div>
                 <div>
                     <label htmlFor="content" className="block text-sm font-bold text-gray-300 mb-2">Nội dung, tóm tắt, hoặc trích đoạn</label>
-                    <textarea id="content" name="content" value={worldData.content} onChange={handleChange} rows={10} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Dán nội dung vào đây. Nội dung càng chi tiết, AI sẽ tạo ra thế giới càng sâu sắc và đúng với văn phong gốc. (Yêu cầu tối thiểu 50 ký tự)" required />
+                    <textarea id="content" name="content" value={worldData.content} onChange={handleChange} rows={10} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Dán nội dung vào đây. Để có trải nghiệm tốt nhất, hãy mô tả chi tiết không chỉ bối cảnh mà cả **tính cách của các nhân vật chính**. Ví dụ: 'Ông Ba là một lão nông hiền lành nhưng cố chấp. Trái lại, Lý trưởng lại gian manh và xảo quyệt.' AI sẽ dùng thông tin này để làm cho họ hành động một cách sống động. (Yêu cầu tối thiểu 50 ký tự)" required />
                     {!isFormValid && worldData.content.trim() !== '' && <p className="text-sm text-red-500 mt-1">Nội dung cần dài hơn để AI có thể hiểu được bối cảnh.</p>}
                 </div>
                 <div className="flex items-center justify-between pt-4">
@@ -430,7 +430,7 @@ const App = () => {
     setLorebookSuggestions([]);
 
     try {
-        const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pwu, setActiveAI);
+        const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pwu, isNsfwEnabled, setActiveAI);
         processStoryResult(result);
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Đã xảy ra lỗi không xác định.";
@@ -440,7 +440,7 @@ const App = () => {
         setIsLoading(false);
         setActiveAI(null);
     }
-  }, [ai, selectedWork, character, lorebook, inventory, equipment, spouse, dating, processStoryResult]);
+  }, [ai, selectedWork, character, lorebook, inventory, equipment, spouse, dating, processStoryResult, isNsfwEnabled]);
 
   const startStory = useCallback(async (initialPrompt: string) => {
       if (!ai || !selectedWork || !character) return;
@@ -452,7 +452,7 @@ const App = () => {
       setSuggestedActions([]);
       
       try {
-          const result = await generateStorySegment(ai, initialPrompt, selectedWork, character, [], [], initialEquipment, null, null, null, setActiveAI);
+          const result = await generateStorySegment(ai, initialPrompt, selectedWork, character, [], [], initialEquipment, null, null, null, isNsfwEnabled, setActiveAI);
           setHistory([]); // Clear history before processing
           processStoryResult(result);
           setStatus(GameStatus.Playing);
@@ -463,7 +463,7 @@ const App = () => {
           setIsLoading(false);
           setActiveAI(null);
       }
-  }, [ai, selectedWork, character, processStoryResult]);
+  }, [ai, selectedWork, character, processStoryResult, isNsfwEnabled]);
   
   const handleUserInput = useCallback(async (userInput: string) => {
     if (!selectedWork || !ai || !character) return;
@@ -494,6 +494,17 @@ const App = () => {
 
     setInventory(prev => prev.filter((_, index) => index !== ringIndex));
     const prompt = `Tôi lấy ra một chiếc nhẫn được bện bằng cỏ và ngỏ lời cầu hôn với ${npcName}, người tôi đang hẹn hò.`;
+    await handleUserInput(prompt);
+  };
+
+  const handleChatWithCompanion = async (npcName: string) => {
+    const prompt = `Tôi chủ động bắt chuyện, tán gẫu vui vẻ với ${npcName}.`;
+    await handleUserInput(prompt);
+  };
+
+  const handleGiveGiftToCompanion = async (npcName: string, item: Item) => {
+    // The AI will handle the item removal from inventory via worldSmith's itemUpdates
+    const prompt = `Tôi lấy ${item.name} từ trong túi đồ của mình và tặng nó cho ${npcName}.`;
     await handleUserInput(prompt);
   };
 
@@ -814,6 +825,8 @@ const App = () => {
                                   spouse={spouse}
                                   onConfess={handleConfess}
                                   onPropose={handlePropose}
+                                  onChat={handleChatWithCompanion}
+                                  onGiveGift={handleGiveGiftToCompanion}
                                   suggestedActions={suggestedActions}
                                />;
       case GameStatus.Error:

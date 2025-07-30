@@ -63,6 +63,8 @@ interface GameScreenProps {
   spouse: string | null;
   onConfess: (npcName: string) => void;
   onPropose: (npcName: string) => void;
+  onChat: (npcName: string) => void;
+  onGiveGift: (npcName: string, item: Item) => void;
   suggestedActions: string[];
 }
 
@@ -72,7 +74,7 @@ const GameScreen = (props: GameScreenProps) => {
       onUpdateLastNarrative, onRegenerate, canRegenerate, lorebookSuggestions, 
       onAddSuggestion, onDismissSuggestions, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, onConfess, onPropose,
-      suggestedActions
+      onChat, onGiveGift, suggestedActions
   } = props;
 
   const [input, setInput] = useState('');
@@ -213,7 +215,7 @@ const GameScreen = (props: GameScreenProps) => {
         <div className="flex-shrink-0 border-b border-gray-700 bg-gray-800 animate-fade-in">
             {activePanel === 'affinity' && <AffinityTracker affinityData={affinity} />}
             {activePanel === 'inventory' && <InventoryPanel inventory={inventory} equipment={equipment} onEquip={onEquipItem} onUnequip={onUnequipItem} />}
-            {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} inventory={inventory} dating={dating} spouse={spouse} onConfess={onConfess} onPropose={onPropose} />}
+            {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} inventory={inventory} dating={dating} spouse={spouse} onConfess={onConfess} onPropose={onPropose} onChat={onChat} onGiveGift={onGiveGift} />}
         </div>
     )}
     <div className="flex-grow p-4 md:p-6 overflow-y-auto bg-gray-900 space-y-6">

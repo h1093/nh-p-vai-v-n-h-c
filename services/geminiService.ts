@@ -47,7 +47,8 @@ export const generateStorySegment = async (
   spouse: string | null,
   dating: string | null,
   previousWorldUpdate: string | null,
-  onProgress: (activeAI: AITypeKey) => void,
+  isNsfwEnabled: boolean,
+  onProgress: (activeAI: AITypeKey) => void
 ): Promise<StorySegmentResult> => {
   try {
     // === 1. Call Storyteller AI ===
@@ -66,7 +67,7 @@ export const generateStorySegment = async (
         },
         required: ["narrative", "dialogueTarget", "summaryForWorldAI", "suggestedActions"]
     };
-    const storytellerInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
+    const storytellerInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating, isNsfwEnabled);
     const storytellerPrompt = `${previousWorldUpdate ? `Cập nhật thế giới ngoài màn hình: ${previousWorldUpdate}\n\n` : ''}Hành động của người chơi: ${prompt}`;
     const storytellerResult = await callGemini(ai, storytellerInstruction, storytellerPrompt, storytellerSchema);
 
@@ -82,7 +83,7 @@ export const generateStorySegment = async (
               dialogue: { type: Type.STRING, description: "Lời thoại của nhân vật." }
           }, required: ["dialogue"]
       };
-      const characterInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
+      const characterInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating, isNsfwEnabled);
       const characterPrompt = `Tình huống: ${storytellerResult.summaryForWorldAI}\nNhân vật của bạn, ${storytellerResult.dialogueTarget}, cần phải nói. Lời thoại của họ là gì?`;
       const characterResult = await callGemini(ai, characterInstruction, characterPrompt, characterActorSchema);
 
@@ -139,7 +140,7 @@ export const generateStorySegment = async (
       },
       required: ["affinityUpdates", "itemUpdates", "companions", "offScreenWorldUpdate", "timePassed"]
     };
-    const worldInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
+    const worldInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating, isNsfwEnabled);
     const worldPrompt = `Dựa trên sự kiện sau: "${storytellerResult.summaryForWorldAI}", hãy cập nhật trạng thái thế giới.`;
     const worldResult = await callGemini(ai, worldInstruction, worldPrompt, worldSmithSchema);
 

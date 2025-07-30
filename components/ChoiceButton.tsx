@@ -7,9 +7,10 @@ interface ChoiceButtonProps {
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md';
+  title?: string;
 }
 
-const ChoiceButton = ({ onClick, children, className = '', disabled = false, variant = 'primary', size = 'md' }: ChoiceButtonProps) => {
+const ChoiceButton = ({ onClick, children, className = '', disabled = false, variant = 'primary', size = 'md', title }: ChoiceButtonProps) => {
   const baseClasses = 'font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800';
   
   const variantClasses = {
@@ -28,6 +29,7 @@ const ChoiceButton = ({ onClick, children, className = '', disabled = false, var
       onClick={onClick}
       disabled={disabled}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
+      title={title}
     >
       {children}
     </button>
