@@ -1,15 +1,92 @@
-import { Work, CharacterData } from './types';
+import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
-export const SAVE_GAME_KEY = 'literary-rpg-save-v4';
+export const SAVE_GAME_KEY = 'literary-rpg-save-v10';
 export const CHARACTERS_SAVE_KEY = 'literary-rpg-characters';
 export const API_KEY_STORAGE_KEY = 'gemini-api-key';
 
-export const baseSystemInstruction = `Bạn là một người kể chuyện bậc thầy cho một game nhập vai tương tác. Người chơi sẽ vào vai một nhân vật trong câu chuyện. Nhiệm vụ của bạn là:
-1. Dựa vào hành động hoặc lời thoại của người chơi (được cung cấp trong prompt), hãy tiếp tục câu chuyện một cách liền mạch và hấp dẫn.
-2. Mô tả kết quả hành động của người chơi, phản ứng của các nhân vật khác, và những thay đổi trong thế giới xung quanh. Giữ cho câu chuyện luôn tiến về phía trước.
-3. Luôn trả lời bằng định dạng JSON theo schema đã cung cấp. Câu trả lời phải là tiếng Việt.
-4. Quan trọng: Hãy tham khảo và sử dụng các thông tin trong 'Sổ tay' (Lorebook) được cung cấp trong lời nhắc hệ thống để đảm bảo tính nhất quán của câu chuyện.`;
+export interface ChangelogEntry {
+  version: string;
+  date: string;
+  changes: string[];
+}
+
+export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+    {
+        version: "v1.1 - Cải tiến & Tính năng mới",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Quản lý nhân vật: Lưu và chọn lại các nhân vật đã tạo để chơi trong các câu chuyện khác nhau.",
+            "Chỉnh sửa & Tạo lại: Toàn quyền kiểm soát câu chuyện với khả năng chỉnh sửa hoặc yêu cầu AI viết lại lượt tường thuật cuối cùng.",
+            "Gợi ý Sổ tay thông minh: AI tự động phát hiện và đề xuất các nhân vật, địa điểm mới để bạn thêm vào sổ tay.",
+            "Nâng cấp giao diện: Các bảng điều khiển chuyên dụng cho Tình cảm, Đồng đội và Túi đồ, giúp quản lý dễ dàng hơn.",
+            "Theo dõi thời gian trong game: Hiển thị chi tiết ngày và giờ, giúp bạn đắm chìm vào câu chuyện.",
+            "Tùy chọn nội dung 18+: Thêm một công tắc để bật các chủ đề trưởng thành, phù hợp với bối cảnh văn học.",
+            "Thêm Nhật ký cập nhật (chính là màn hình bạn đang xem!)."
+        ],
+    },
+    {
+        version: "v1.0 - Ra mắt",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Ra mắt phiên bản đầu tiên của Nhập Vai Văn Học.",
+            "Hỗ trợ tác phẩm 'Chí Phèo' và 'Truyện Kiều'.",
+            "Tính năng tạo thế giới tùy chỉnh từ văn bản người dùng.",
+            "Hệ thống nhập vai đa AI: Người Kể Chuyện, Tương Tác Nhân Vật, Quản Lý Thế Giới.",
+            "Các tính năng cốt lõi: Sổ tay, Tình cảm NPC, Túi đồ & Trang bị, Đồng đội.",
+            "Lưu và tải lại tiến trình câu chuyện.",
+        ],
+    },
+];
+
+const storytellerBaseInstruction = `Bạn là AI Người Kể Chuyện bậc thầy cho một game nhập vai.
+1. Vai trò của bạn là dẫn dắt cốt truyện chính. Hãy mô tả bối cảnh, môi trường, và kết quả tổng quan của hành động của người chơi.
+2. Khi có đoạn hội thoại, hãy viết một placeholder ví dụ như [DIALOGUE:"Tên Nhân Vật"]. AI Tương Tác Nhân Vật sẽ thay thế placeholder này bằng lời thoại thực tế.
+3. Giữ cho câu chuyện luôn tiến về phía trước. Đừng sa đà vào chi tiết không cần thiết.
+4. Bạn có thể sẽ nhận được một "Cập nhật thế giới ngoài màn hình". Hãy khéo léo lồng ghép thông tin này vào đoạn tường thuật của bạn để thế giới có cảm giác sống động và đang thay đổi. Đừng chỉ lặp lại nó.
+5. Luôn trả lời bằng định dạng JSON theo schema. Câu trả lời phải là tiếng Việt.`;
+
+const characterActorBaseInstruction = `Bạn là AI Tương Tác Nhân Vật.
+1. Vai trò của bạn là nhập vai một nhân vật (NPC) và tạo ra lời thoại cho họ.
+2. Bạn sẽ nhận được thông tin về nhân vật bạn đang đóng vai và tình huống hiện tại.
+3. Chỉ trả lời bằng lời thoại của nhân vật đó. Không thêm bất kỳ mô tả hay tường thuật nào.
+4. Giữ lời thoại ngắn gọn, tự nhiên và phù hợp với tính cách của nhân vật.
+5. Luôn trả lời bằng định dạng JSON theo schema.`;
+
+const worldSmithBaseInstruction = `Bạn là AI Quản Lý Thế Giới.
+1. Vai trò của bạn là duy trì sự logic và nhất quán của thế giới game.
+2. Dựa trên hành động của người chơi và kết quả câu chuyện, hãy quyết định những thay đổi đối với trạng thái game.
+3. Cập nhật một cách hợp lý: tình cảm NPC (affinityUpdates), vật phẩm trong túi đồ (itemUpdates), và danh sách đồng đội (companions).
+4. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
+5. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
+6. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
+7. Luôn trả lời bằng định dạng JSON theo schema.`;
+
+
+export const NSFW_INSTRUCTION_APPENDIX = `\n\nQUY TẮC 18+:\nKhi chế độ 18+ được bật, bạn được phép mô tả các cảnh nhạy cảm, bạo lực, hoặc lãng mạn một cách trưởng thành và phù hợp với bối cảnh văn học, miễn là nó phục vụ cho sự phát triển của câu chuyện và nhân vật. Hãy xử lý các chủ đề này một cách tinh tế và không miễn cưỡng. Tránh các nội dung cực đoan, bất hợp pháp hoặc phi đạo đức.`;
+
+const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment): string => {
+    let finalInstruction = baseInstruction;
+    
+    finalInstruction += `\n\nTên nhân vật người chơi là: ${characterName}.`;
+
+    if (lorebook.length > 0) {
+        const lorebookContext = lorebook.map(entry => `- ${entry.key}: ${entry.value}`).join('\n');
+        finalInstruction += `\n\n--- SỔ TAY (LOREBOOK) ---\n${lorebookContext}\n--- KẾT THÚC SỔ TAY ---`;
+    }
+
+    const equippedItems = Object.values(equipment).filter(Boolean).map(item => `- ${item!.name}: ${item!.description}`);
+    if (equippedItems.length > 0) {
+        finalInstruction += `\n\n--- TRANG BỊ HIỆN TẠI ---\n${equippedItems.join('\n')}\n--- KẾT THÚC TRANG BỊ ---`;
+    }
+
+    const inventoryItems = inventory.map(item => `- ${item.name}`);
+    if (inventoryItems.length > 0) {
+        finalInstruction += `\n\n--- TÚI ĐỒ ---\n${inventoryItems.join('\n')}\n--- KẾT THÚC TÚI ĐỒ ---`;
+    }
+
+    return finalInstruction;
+};
 
 export const CHI_PHEO_WORK: Work = {
     id: 'chi-pheo',
@@ -34,7 +111,9 @@ Nhiệm vụ của bạn:
 2. Tạo ra một tình huống khởi đầu thú vị. Có thể cho họ gặp một nhân vật quen thuộc (như Lý Cường, Bá Kiến, Thị Nở...) hoặc đối mặt với một sự kiện đặc trưng của làng.
 3. Kết thúc đoạn văn mở đầu, sẵn sàng để người chơi đưa ra hành động đầu tiên của họ.`;
     },
-    systemInstruction: `${baseSystemInstruction}\nGiọng văn và không khí phải đậm chất của tác phẩm gốc "Chí Phèo".`
+    storytellerSystemInstruction: `${storytellerBaseInstruction}\nGiọng văn và không khí phải đậm chất của tác phẩm gốc "Chí Phèo".`,
+    characterSystemInstruction: `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật trong thế giới của Nam Cao.`,
+    worldSystemInstruction: `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc ngầm của làng Vũ Đại.`
 };
 
 export const TRUYEN_KIEU_WORK: Work = {
@@ -59,7 +138,9 @@ Nhiệm vụ của bạn:
 1. Dựa vào thông tin trên, viết một đoạn văn mở đầu giới thiệu nhân vật này trong thế giới của Truyện Kiều. Hãy sử dụng văn phong giàu hình ảnh, có thể phảng phất âm hưởng thơ lục bát của Nguyễn Du.
 2. Đặt nhân vật vào một tình huống khởi đầu thú vị, có thể liên quan đến một sự kiện hoặc một nhân vật trong tác phẩm gốc (ví dụ: chứng kiến cảnh Kiều bán mình, gặp gỡ Thúc Sinh, hoặc làm việc cho Hoạn Thư).`;
     },
-    systemInstruction: `${baseSystemInstruction}\nSử dụng ngôn ngữ giàu chất thơ, hình ảnh, mang âm hưởng của văn học trung đại và kiệt tác Truyện Kiều.`
+    storytellerSystemInstruction: `${storytellerBaseInstruction}\nSử dụng ngôn ngữ giàu chất thơ, hình ảnh, mang âm hưởng của văn học trung đại và kiệt tác Truyện Kiều.`,
+    characterSystemInstruction: `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật trong thế giới của Nguyễn Du với lời thoại trang trọng, giàu hình ảnh.`,
+    worldSystemInstruction: `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc xã hội và số phận trong Truyện Kiều.`
 };
 
 export const LITERARY_WORKS: Work[] = [
@@ -68,18 +149,9 @@ export const LITERARY_WORKS: Work[] = [
 ];
 
 export const createCustomLiteraryWork = (title: string, author: string, content: string): Work => {
-    const customSystemInstruction = `Bạn là một người kể chuyện bậc thầy cho một game nhập vai tương tác. Toàn bộ bối cảnh, nhân vật, và không khí của game được xây dựng dựa trên một văn bản do người dùng cung cấp.
-
-Văn bản gốc của người dùng:
----
-${content}
----
-
-Nhiệm vụ của bạn là:
-1. Dựa vào hành động hoặc lời thoại của người chơi (được cung cấp trong prompt), tiếp tục câu chuyện một cách liền mạch và hấp dẫn.
-2. Tuyệt đối trung thành với văn bản gốc của người dùng. Sử dụng giọng văn, ngôn ngữ, và không khí được gợi ý từ văn bản đó.
-3. Luôn trả lời bằng định dạng JSON theo schema đã cung cấp. Câu trả lời phải là tiếng Việt.
-4. Quan trọng: Hãy tham khảo và sử dụng các thông tin trong 'Sổ tay' (Lorebook) được cung cấp trong lời nhắc hệ thống để đảm bảo tính nhất quán của câu chuyện.`;
+    const customStorytellerInstruction = `${storytellerBaseInstruction}\nToàn bộ bối cảnh, nhân vật, và không khí của game được xây dựng dựa trên một văn bản do người dùng cung cấp. Cố gắng tái hiện văn phong từ văn bản gốc.\n\nVăn bản gốc:\n---\n${content}\n---`;
+    const customCharacterInstruction = `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật phù hợp với thế giới được mô tả trong văn bản gốc.`;
+    const customWorldInstruction = `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc và logic từ văn bản gốc.`;
 
     return {
         id: `custom-${Date.now()}`,
@@ -109,6 +181,10 @@ Nhiệm vụ của bạn:
 1. Dựa vào thông tin trên, hãy viết một đoạn văn mở đầu hấp dẫn, giới thiệu nhân vật mới này vào bối cảnh thế giới đã cho. Hãy cố gắng nắm bắt và tái hiện văn phong, không khí từ nội dung gốc mà người dùng đã cung cấp.
 2. Tạo ra một tình huống khởi đầu thú vị, phù hợp với thế giới đó.`;
         },
-        systemInstruction: customSystemInstruction
+        storytellerSystemInstruction: customStorytellerInstruction,
+        characterSystemInstruction: customCharacterInstruction,
+        worldSystemInstruction: customWorldInstruction,
     };
 };
+
+export const getSystemInstructionWithContext = addContextToSystemInstruction;
