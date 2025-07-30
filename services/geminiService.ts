@@ -6,10 +6,13 @@ export interface StorySegmentResult {
   narrative: string;
   speaker: string;
   aiType: AITypeKey;
+  suggestedActions: string[];
   worldStateChanges: {
     affinityUpdates: AffinityUpdate[];
     itemUpdates: ItemUpdate[];
     companions: string[];
+    datingUpdate?: { partnerName: string };
+    marriageUpdate?: { spouseName: string };
     offScreenWorldUpdate: string;
     timePassed: number;
   }
@@ -41,6 +44,8 @@ export const generateStorySegment = async (
   lorebook: LorebookEntry[],
   inventory: Item[],
   equipment: Equipment,
+  spouse: string | null,
+  dating: string | null,
   previousWorldUpdate: string | null,
   onProgress: (activeAI: AITypeKey) => void,
 ): Promise<StorySegmentResult> => {
@@ -52,11 +57,16 @@ export const generateStorySegment = async (
         properties: {
             narrative: { type: Type.STRING, description: "Phần tường thuật chính, mô tả bối cảnh và kết quả hành động. Nếu có hội thoại, dùng placeholder [DIALOGUE:\"Tên nhân vật\"]" },
             dialogueTarget: { type: Type.STRING, description: "Tên nhân vật cần nói chuyện. Trả về 'null' nếu không có hội thoại." },
-            summaryForWorldAI: { type: Type.STRING, description: "Tóm tắt ngắn gọn hành động và kết quả để AI Quản lý Thế giới phân tích." }
+            summaryForWorldAI: { type: Type.STRING, description: "Tóm tắt ngắn gọn hành động và kết quả để AI Quản lý Thế giới phân tích." },
+            suggestedActions: {
+                type: Type.ARRAY,
+                description: "Một mảng chứa 3-5 chuỗi gợi ý hành động ngắn gọn cho người chơi.",
+                items: { type: Type.STRING }
+            }
         },
-        required: ["narrative", "dialogueTarget", "summaryForWorldAI"]
+        required: ["narrative", "dialogueTarget", "summaryForWorldAI", "suggestedActions"]
     };
-    const storytellerInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character.name, lorebook, inventory, equipment);
+    const storytellerInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
     const storytellerPrompt = `${previousWorldUpdate ? `Cập nhật thế giới ngoài màn hình: ${previousWorldUpdate}\n\n` : ''}Hành động của người chơi: ${prompt}`;
     const storytellerResult = await callGemini(ai, storytellerInstruction, storytellerPrompt, storytellerSchema);
 
@@ -72,7 +82,7 @@ export const generateStorySegment = async (
               dialogue: { type: Type.STRING, description: "Lời thoại của nhân vật." }
           }, required: ["dialogue"]
       };
-      const characterInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character.name, lorebook, inventory, equipment);
+      const characterInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
       const characterPrompt = `Tình huống: ${storytellerResult.summaryForWorldAI}\nNhân vật của bạn, ${storytellerResult.dialogueTarget}, cần phải nói. Lời thoại của họ là gì?`;
       const characterResult = await callGemini(ai, characterInstruction, characterPrompt, characterActorSchema);
 
@@ -112,12 +122,24 @@ export const generateStorySegment = async (
           }
         },
         companions: { type: Type.ARRAY, items: { type: Type.STRING } },
+        datingUpdate: {
+            type: Type.OBJECT,
+            properties: {
+                partnerName: { type: Type.STRING, description: "Tên của nhân vật mà người chơi đã bắt đầu hẹn hò thành công trong lượt này. Trả về null nếu không có."}
+            }
+        },
+        marriageUpdate: {
+            type: Type.OBJECT,
+            properties: {
+                spouseName: { type: Type.STRING, description: "Tên của nhân vật mà người chơi đã kết hôn thành công trong lượt này. Trả về null nếu không có sự kiện kết hôn."}
+            }
+        },
         offScreenWorldUpdate: { type: Type.STRING, description: "Một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra 'ngoài màn hình' trong khi người chơi hành động để làm cho thế giới có cảm giác sống động." },
         timePassed: { type: Type.INTEGER, description: "Số phút đã trôi qua cho hành động này." }
       },
       required: ["affinityUpdates", "itemUpdates", "companions", "offScreenWorldUpdate", "timePassed"]
     };
-    const worldInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character.name, lorebook, inventory, equipment);
+    const worldInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character.name, lorebook, inventory, equipment, spouse, dating);
     const worldPrompt = `Dựa trên sự kiện sau: "${storytellerResult.summaryForWorldAI}", hãy cập nhật trạng thái thế giới.`;
     const worldResult = await callGemini(ai, worldInstruction, worldPrompt, worldSmithSchema);
 
@@ -129,10 +151,13 @@ export const generateStorySegment = async (
       narrative: finalNarrative,
       speaker: finalSpeaker,
       aiType: finalAIType,
+      suggestedActions: storytellerResult.suggestedActions || [],
       worldStateChanges: {
           affinityUpdates: worldResult.affinityUpdates || [],
           itemUpdates: worldResult.itemUpdates || [],
           companions: worldResult.companions || [],
+          datingUpdate: worldResult.datingUpdate,
+          marriageUpdate: worldResult.marriageUpdate,
           offScreenWorldUpdate: worldResult.offScreenWorldUpdate || "Thế giới vẫn yên bình.",
           timePassed: worldResult.timePassed || 15, // Fallback to 15 minutes
       }

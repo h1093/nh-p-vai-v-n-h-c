@@ -4,6 +4,7 @@ import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
+import ChoiceButton from './ChoiceButton';
 
 const LorebookSuggestions = ({ suggestions, onAdd, onDismiss }: { suggestions: LorebookSuggestion[], onAdd: (suggestion: LorebookSuggestion) => void, onDismiss: () => void }) => {
   if (suggestions.length === 0) return null;
@@ -58,6 +59,11 @@ interface GameScreenProps {
   onEquipItem: (item: Item) => void;
   onUnequipItem: (slot: EquipmentSlot) => void;
   gameTime: number;
+  dating: string | null;
+  spouse: string | null;
+  onConfess: (npcName: string) => void;
+  onPropose: (npcName: string) => void;
+  suggestedActions: string[];
 }
 
 const GameScreen = (props: GameScreenProps) => {
@@ -65,7 +71,8 @@ const GameScreen = (props: GameScreenProps) => {
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
       onUpdateLastNarrative, onRegenerate, canRegenerate, lorebookSuggestions, 
       onAddSuggestion, onDismissSuggestions, affinity, inventory, equipment,
-      companions, onEquipItem, onUnequipItem, gameTime
+      companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, onConfess, onPropose,
+      suggestedActions
   } = props;
 
   const [input, setInput] = useState('');
@@ -121,6 +128,12 @@ const GameScreen = (props: GameScreenProps) => {
 
   const handleCancelEdit = () => {
     setEditingMessage(null);
+  };
+
+  const handleSuggestionClick = (action: string) => {
+    if(loading) return;
+    onUserInput(action);
+    setInput('');
   };
   
   useEffect(() => {
@@ -200,7 +213,7 @@ const GameScreen = (props: GameScreenProps) => {
         <div className="flex-shrink-0 border-b border-gray-700 bg-gray-800 animate-fade-in">
             {activePanel === 'affinity' && <AffinityTracker affinityData={affinity} />}
             {activePanel === 'inventory' && <InventoryPanel inventory={inventory} equipment={equipment} onEquip={onEquipItem} onUnequip={onUnequipItem} />}
-            {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} />}
+            {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} inventory={inventory} dating={dating} spouse={spouse} onConfess={onConfess} onPropose={onPropose} />}
         </div>
     )}
     <div className="flex-grow p-4 md:p-6 overflow-y-auto bg-gray-900 space-y-6">
@@ -267,6 +280,22 @@ const GameScreen = (props: GameScreenProps) => {
     />
     
     <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 rounded-b-xl">
+      {!loading && !editingMessage && suggestedActions.length > 0 && (
+          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-700 pb-4 animate-fade-in">
+              <p className="text-sm font-semibold text-gray-400 mr-2 self-center">Gợi ý:</p>
+              {suggestedActions.map((action, index) => (
+                  <ChoiceButton
+                      key={index}
+                      onClick={() => handleSuggestionClick(action)}
+                      size="sm"
+                      variant="secondary"
+                      className="!bg-gray-700 !text-gray-300 hover:!bg-gray-600"
+                  >
+                      {action}
+                  </ChoiceButton>
+              ))}
+          </div>
+        )}
         <div className="flex items-center gap-2">
             <button
                 onClick={onRegenerate}

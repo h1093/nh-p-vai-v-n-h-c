@@ -1,7 +1,7 @@
 import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
-export const SAVE_GAME_KEY = 'literary-rpg-save-v10';
+export const SAVE_GAME_KEY = 'literary-rpg-save-v12';
 export const CHARACTERS_SAVE_KEY = 'literary-rpg-characters';
 export const API_KEY_STORAGE_KEY = 'gemini-api-key';
 
@@ -12,6 +12,25 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+    {
+        version: "v1.3 - Hẹn hò & Tỏ tình",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Thêm trạng thái 'Người yêu' trước khi tiến tới hôn nhân.",
+            "Thêm hành động 'Tỏ tình' khi tình cảm với một đồng đội đủ cao (>70).",
+            "Cập nhật logic cầu hôn: Bạn phải đang trong mối quan hệ hẹn hò với nhân vật trước khi có thể cầu hôn.",
+            "Giao diện Đồng đội được cập nhật để hiển thị trạng thái 'Người yêu' và các lựa chọn tương tác tình cảm mới."
+        ],
+    },
+    {
+        version: "v1.2 - Hôn nhân & Tình yêu",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Thêm tính năng Cầu hôn! Khi tình cảm với một đồng đội đủ sâu đậm (>90) và có vật phẩm đặc biệt ('Nhẫn Cỏ'), bạn có thể ngỏ lời với họ.",
+            "Trạng thái 'Bạn đời' mới sẽ ảnh hưởng đến cách AI kể chuyện và các nhân vật khác tương tác với bạn.",
+            "Giao diện Đồng đội được cập nhật để hiển thị trạng thái hôn nhân và nút cầu hôn khi đủ điều kiện."
+        ],
+    },
     {
         version: "v1.1 - Cải tiến & Tính năng mới",
         date: "Tháng 7, 2024",
@@ -44,7 +63,8 @@ const storytellerBaseInstruction = `Bạn là AI Người Kể Chuyện bậc th
 2. Khi có đoạn hội thoại, hãy viết một placeholder ví dụ như [DIALOGUE:"Tên Nhân Vật"]. AI Tương Tác Nhân Vật sẽ thay thế placeholder này bằng lời thoại thực tế.
 3. Giữ cho câu chuyện luôn tiến về phía trước. Đừng sa đà vào chi tiết không cần thiết.
 4. Bạn có thể sẽ nhận được một "Cập nhật thế giới ngoài màn hình". Hãy khéo léo lồng ghép thông tin này vào đoạn tường thuật của bạn để thế giới có cảm giác sống động và đang thay đổi. Đừng chỉ lặp lại nó.
-5. Luôn trả lời bằng định dạng JSON theo schema. Câu trả lời phải là tiếng Việt.`;
+5. Luôn trả lời bằng định dạng JSON theo schema. Câu trả lời phải là tiếng Việt.
+6. Sau mỗi đoạn tường thuật, hãy tạo ra 3-5 gợi ý hành động ngắn gọn, khả thi mà người chơi có thể thực hiện tiếp theo. Các gợi ý này phải ở trong mảng 'suggestedActions'.`;
 
 const characterActorBaseInstruction = `Bạn là AI Tương Tác Nhân Vật.
 1. Vai trò của bạn là nhập vai một nhân vật (NPC) và tạo ra lời thoại cho họ.
@@ -57,18 +77,26 @@ const worldSmithBaseInstruction = `Bạn là AI Quản Lý Thế Giới.
 1. Vai trò của bạn là duy trì sự logic và nhất quán của thế giới game.
 2. Dựa trên hành động của người chơi và kết quả câu chuyện, hãy quyết định những thay đổi đối với trạng thái game.
 3. Cập nhật một cách hợp lý: tình cảm NPC (affinityUpdates), vật phẩm trong túi đồ (itemUpdates), và danh sách đồng đội (companions).
-4. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
-5. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
-6. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
-7. Luôn trả lời bằng định dạng JSON theo schema.`;
+4. Nếu người chơi tỏ tình và thành công, hãy cập nhật trạng thái hẹn hò (datingUpdate).
+5. Nếu người chơi cầu hôn và thành công, hãy cập nhật trạng thái hôn nhân (marriageUpdate).
+6. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
+7. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
+8. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
+9. Luôn trả lời bằng định dạng JSON theo schema.`;
 
 
 export const NSFW_INSTRUCTION_APPENDIX = `\n\nQUY TẮC 18+:\nKhi chế độ 18+ được bật, bạn được phép mô tả các cảnh nhạy cảm, bạo lực, hoặc lãng mạn một cách trưởng thành và phù hợp với bối cảnh văn học, miễn là nó phục vụ cho sự phát triển của câu chuyện và nhân vật. Hãy xử lý các chủ đề này một cách tinh tế và không miễn cưỡng. Tránh các nội dung cực đoan, bất hợp pháp hoặc phi đạo đức.`;
 
-const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment): string => {
+const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment, spouse: string | null, dating: string | null): string => {
     let finalInstruction = baseInstruction;
     
     finalInstruction += `\n\nTên nhân vật người chơi là: ${characterName}.`;
+    
+    if (spouse) {
+      finalInstruction += `\n\nBạn đã kết hôn với: ${spouse}. Đây là một thông tin quan trọng ảnh hưởng đến các mối quan hệ và sự kiện.`;
+    } else if (dating) {
+      finalInstruction += `\n\nBạn đang hẹn hò với: ${dating}.`;
+    }
 
     if (lorebook.length > 0) {
         const lorebookContext = lorebook.map(entry => `- ${entry.key}: ${entry.value}`).join('\n');

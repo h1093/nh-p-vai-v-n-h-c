@@ -315,6 +315,8 @@ const App = () => {
   const [inventory, setInventory] = useState<Item[]>([]);
   const [equipment, setEquipment] = useState<Equipment>(initialEquipment);
   const [companions, setCompanions] = useState<string[]>([]);
+  const [dating, setDating] = useState<string | null>(null);
+  const [spouse, setSpouse] = useState<string | null>(null);
   const [offScreenWorldUpdate, setOffScreenWorldUpdate] = useState<string | null>(null);
   const [gameTime, setGameTime] = useState(480); // Start at 8:00 AM
   
@@ -322,9 +324,17 @@ const App = () => {
   const [isLorebookOpen, setIsLorebookOpen] = useState(false);
   const [isChangelogOpen, setIsChangelogOpen] = useState(false);
   const [lorebookSuggestions, setLorebookSuggestions] = useState<LorebookSuggestion[]>([]);
+  const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
 
   useEffect(() => {
     try {
+      // Show changelog on first visit to new version
+      const lastVersion = localStorage.getItem('changelog-version');
+      if (lastVersion !== CHANGELOG_ENTRIES[0].version) {
+          setIsChangelogOpen(true);
+          localStorage.setItem('changelog-version', CHANGELOG_ENTRIES[0].version);
+      }
+
       const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
       if (savedKey) {
           setAi(new GoogleGenAI({ apiKey: savedKey }));
@@ -346,7 +356,7 @@ const App = () => {
   }, []);
   
   const processStoryResult = useCallback((result: StorySegmentResult) => {
-      const { narrative, speaker, aiType, worldStateChanges } = result;
+      const { narrative, speaker, aiType, worldStateChanges, suggestedActions } = result;
 
       const newModelMessage: HistoryMessage = {
           role: 'model',
@@ -357,7 +367,7 @@ const App = () => {
       };
       setHistory(prev => [...prev, newModelMessage]);
       
-      const { affinityUpdates, itemUpdates, companions, offScreenWorldUpdate, timePassed } = worldStateChanges;
+      const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, offScreenWorldUpdate, timePassed } = worldStateChanges;
 
       if (affinityUpdates && affinityUpdates.length > 0) {
         setAffinity(prevAffinity => {
@@ -391,8 +401,18 @@ const App = () => {
           setCompanions(companions);
       }
       
+      if (datingUpdate && datingUpdate.partnerName) {
+        setDating(datingUpdate.partnerName);
+      }
+
+      if (marriageUpdate && marriageUpdate.spouseName) {
+        setSpouse(marriageUpdate.spouseName);
+        setDating(null); // When married, no longer just "dating"
+      }
+      
       setOffScreenWorldUpdate(offScreenWorldUpdate);
       setGameTime(prev => prev + timePassed);
+      setSuggestedActions(suggestedActions || []);
 
       // Fire-and-forget suggestion extraction
       if (ai) {
@@ -410,7 +430,7 @@ const App = () => {
     setLorebookSuggestions([]);
 
     try {
-        const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, pwu, setActiveAI);
+        const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pwu, setActiveAI);
         processStoryResult(result);
     } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Đã xảy ra lỗi không xác định.";
@@ -420,7 +440,7 @@ const App = () => {
         setIsLoading(false);
         setActiveAI(null);
     }
-  }, [ai, selectedWork, character, lorebook, inventory, equipment, processStoryResult]);
+  }, [ai, selectedWork, character, lorebook, inventory, equipment, spouse, dating, processStoryResult]);
 
   const startStory = useCallback(async (initialPrompt: string) => {
       if (!ai || !selectedWork || !character) return;
@@ -429,9 +449,10 @@ const App = () => {
       setError(null);
       setLastTurnInfo({ prompt: initialPrompt, previousWorldUpdate: null });
       setLorebookSuggestions([]);
+      setSuggestedActions([]);
       
       try {
-          const result = await generateStorySegment(ai, initialPrompt, selectedWork, character, [], [], initialEquipment, null, setActiveAI);
+          const result = await generateStorySegment(ai, initialPrompt, selectedWork, character, [], [], initialEquipment, null, null, null, setActiveAI);
           setHistory([]); // Clear history before processing
           processStoryResult(result);
           setStatus(GameStatus.Playing);
@@ -447,15 +468,39 @@ const App = () => {
   const handleUserInput = useCallback(async (userInput: string) => {
     if (!selectedWork || !ai || !character) return;
     
+    setSuggestedActions([]);
     const newUserMessage: HistoryMessage = { role: 'user', content: userInput, id: `user-${Date.now()}`};
     setHistory(prev => [...prev, newUserMessage]);
     
     await handleGenerateStory(userInput, offScreenWorldUpdate);
   }, [selectedWork, ai, character, handleGenerateStory, offScreenWorldUpdate]);
 
+  const handleConfess = async (npcName: string) => {
+    const prompt = `Tôi lấy hết can đảm, bày tỏ tình cảm của mình và ngỏ lời muốn bắt đầu một mối quan hệ hẹn hò với ${npcName}.`;
+    await handleUserInput(prompt);
+  };
+
+  const handlePropose = async (npcName: string) => {
+    if (dating !== npcName) {
+        alert("Bạn cần phải trong mối quan hệ hẹn hò với người này trước khi cầu hôn!");
+        return;
+    }
+    const ringName = "nhẫn cỏ";
+    const ringIndex = inventory.findIndex(item => item.name.toLowerCase() === ringName);
+    if (ringIndex === -1) {
+        alert("Bạn cần một chiếc Nhẫn Cỏ để cầu hôn!");
+        return;
+    }
+
+    setInventory(prev => prev.filter((_, index) => index !== ringIndex));
+    const prompt = `Tôi lấy ra một chiếc nhẫn được bện bằng cỏ và ngỏ lời cầu hôn với ${npcName}, người tôi đang hẹn hò.`;
+    await handleUserInput(prompt);
+  };
+
   const handleRegenerate = useCallback(async () => {
       if (!lastTurnInfo || isLoading) return;
       
+      setSuggestedActions([]);
       // This logic will be imperfect with time, but it's the best we can do without complex state snapshots.
       // We will revert the last model message, but game state changes (affinity, items, time) from that turn will persist.
       const historyWithoutLastModelMessage = history.filter(m => m.role !== 'model' || m.id !== history[history.length - 1].id);
@@ -508,10 +553,13 @@ const App = () => {
       setInventory([]);
       setEquipment(initialEquipment);
       setCompanions([]);
+      setDating(null);
+      setSpouse(null);
       setLastTurnInfo(null);
       setOffScreenWorldUpdate(null);
       setIsNsfwEnabled(false);
       setLorebookSuggestions([]);
+      setSuggestedActions([]);
       setCharacter(null);
       setGameTime(480); // Reset time to 8:00 AM
   };
@@ -604,7 +652,7 @@ const App = () => {
   const handleSaveAndExit = () => {
     if (status === GameStatus.Playing && selectedWork && history.length > 0) {
         const stateToSave = {
-            version: 'v10',
+            version: 'v12',
             selectedWork,
             character,
             history,
@@ -613,6 +661,8 @@ const App = () => {
             inventory,
             equipment,
             companions,
+            dating,
+            spouse,
             lastTurnInfo,
             isNsfwEnabled,
             offScreenWorldUpdate,
@@ -630,7 +680,7 @@ const App = () => {
 
     try {
         const savedState = JSON.parse(savedData);
-        if(savedState.version !== 'v10'){
+        if(savedState.version !== 'v12'){
             resetToWorkSelection(true);
             alert("Phiên bản lưu cũ không tương thích. Bắt đầu trò chơi mới.");
             return;
@@ -654,6 +704,8 @@ const App = () => {
         setInventory(savedState.inventory || []);
         setEquipment(savedState.equipment || initialEquipment);
         setCompanions(savedState.companions || []);
+        setDating(savedState.dating || null);
+        setSpouse(savedState.spouse || null);
         setLastTurnInfo(savedState.lastTurnInfo || null);
         setIsNsfwEnabled(savedState.isNsfwEnabled || false);
         setOffScreenWorldUpdate(savedState.offScreenWorldUpdate || null);
@@ -758,6 +810,11 @@ const App = () => {
                                   onEquipItem={handleEquipItem}
                                   onUnequipItem={handleUnequipItem}
                                   gameTime={gameTime}
+                                  dating={dating}
+                                  spouse={spouse}
+                                  onConfess={handleConfess}
+                                  onPropose={handlePropose}
+                                  suggestedActions={suggestedActions}
                                />;
       case GameStatus.Error:
         const isApiKeyError = error && (error.includes("API key") || error.includes("API Key"));
