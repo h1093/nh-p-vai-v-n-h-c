@@ -18,8 +18,36 @@ export interface StorySegmentResult {
   }
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function withRetry<T>(apiCall: () => Promise<T>): Promise<T> {
+    const maxRetries = 3;
+    let lastError: any = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            return await apiCall();
+        } catch (error: any) {
+            lastError = error;
+            
+            const errorString = JSON.stringify(error).toLowerCase();
+            const isRateLimitError = errorString.includes('429') || errorString.includes('rate limit') || errorString.includes('resource_exhausted');
+
+            if (isRateLimitError && attempt < maxRetries - 1) {
+                const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
+                console.warn(`Rate limit exceeded. Retrying in ${Math.round(delay / 1000)}s... (Attempt ${attempt + 1}/${maxRetries})`);
+                await sleep(delay);
+            } else {
+                throw error;
+            }
+        }
+    }
+    throw lastError;
+}
+
+
 const callGemini = async (ai: GoogleGenAI, systemInstruction: string, prompt: string, responseSchema: any) => {
-    const response = await ai.models.generateContent({
+    const response = await withRetry(() => ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: prompt,
       config: {
@@ -28,7 +56,7 @@ const callGemini = async (ai: GoogleGenAI, systemInstruction: string, prompt: st
         responseSchema: responseSchema,
         thinkingConfig: { thinkingBudget: 0 }
       },
-    });
+    }));
 
     const jsonText = response.text.trim();
     const cleanedJsonText = jsonText.replace(/^```json\s*|```$/g, '');
@@ -203,7 +231,7 @@ export const extractLoreSuggestions = async (
       }
     };
 
-    const response = await ai.models.generateContent({
+    const response = await withRetry(() => ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: narrative,
       config: {
@@ -212,7 +240,7 @@ export const extractLoreSuggestions = async (
         responseSchema,
         thinkingConfig: { thinkingBudget: 0 }
       }
-    });
+    }));
 
     const jsonText = response.text.trim();
     const cleanedJsonText = jsonText.replace(/^```json\s*|```$/g, '');

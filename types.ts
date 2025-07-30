@@ -5,6 +5,7 @@ export const GameStatus = {
     Start: 'Start',
     CharacterCreation: 'CharacterCreation',
     Loading: 'Loading',
+    StoryStarting: 'StoryStarting',
     Playing: 'Playing',
     Error: 'Error'
 } as const;

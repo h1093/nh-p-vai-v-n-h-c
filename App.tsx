@@ -9,6 +9,7 @@ import GameScreen from './components/GameScreen';
 import LorebookModal from './components/LorebookModal';
 import ChangelogScreen from './components/ChangelogScreen';
 import { StorySegmentResult } from './services/geminiService';
+import AIStatusIndicator from './components/AIStatusIndicator';
 
 const ApiKeyScreen = ({ onSubmit, error }: { onSubmit: (key: string) => void, error: string | null }) => {
     const [key, setKey] = useState('');
@@ -379,6 +380,16 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSa
   );
 };
 
+const StoryStartingScreen = ({ activeAI }: { activeAI: AITypeKey | null }) => (
+    <div className="flex flex-col items-center justify-center h-full text-center max-w-2xl mx-auto p-8 bg-gray-800 rounded-xl shadow-2xl shadow-black/20 border border-gray-700 animate-fade-in">
+        <h1 className="text-4xl font-serif-display font-bold text-gray-100 mb-6">Đang kiến tạo thế giới...</h1>
+        <p className="text-gray-300 mb-8">Xin chờ một chút trong khi các AI dựng nên câu chuyện cho bạn.</p>
+        <div className="w-full bg-gray-900/50 p-4 rounded-lg">
+            <AIStatusIndicator activeAI={activeAI} />
+        </div>
+    </div>
+);
+
 const initialEquipment: Equipment = { weapon: null, armor: null };
 
 const App = () => {
@@ -531,22 +542,21 @@ const App = () => {
   const startStory = useCallback(async (initialPrompt: string) => {
       if (!ai || !selectedWork || !character) return;
       
-      setIsLoading(true);
+      setStatus(GameStatus.StoryStarting);
       setError(null);
       setLastTurnInfo({ prompt: initialPrompt, previousWorldUpdate: null });
       setLorebookSuggestions([]);
       setSuggestedActions([]);
+      setActiveAI(null);
       
       try {
           const result = await generateStorySegment(ai, initialPrompt, selectedWork, character, [], [], initialEquipment, null, null, null, isNsfwEnabled, setActiveAI);
-          setHistory([]); // Clear history before processing
+          setHistory([]);
           processStoryResult(result);
           setStatus(GameStatus.Playing);
       } catch (e) {
           setError(e instanceof Error ? e.message : "Đã xảy ra lỗi không xác định.");
           setStatus(GameStatus.Error);
-      } finally {
-          setIsLoading(false);
           setActiveAI(null);
       }
   }, [ai, selectedWork, character, processStoryResult, isNsfwEnabled]);
@@ -661,25 +671,27 @@ const App = () => {
       setGameTime(480); // Reset time to 8:00 AM
   };
 
-  const handleStartNewGame = (startAction: () => void) => {
+  const prepareForNewGame = (): boolean => {
     if (hasSavedGame) {
         if (window.confirm("Bạn có chắc muốn bắt đầu một câu chuyện mới? Tiến trình hiện tại sẽ bị xóa.")) {
             localStorage.removeItem(SAVE_GAME_KEY);
             setHasSavedGame(false);
             resetGameState();
-            startAction();
+            return true;
+        } else {
+            return false; // User cancelled
         }
-    } else {
-        resetGameState();
-        startAction();
     }
+    // No saved game, just reset and proceed
+    resetGameState();
+    return true;
   };
 
   const handleSelectWork = (work: Work) => {
-    handleStartNewGame(() => {
+    if (prepareForNewGame()) {
         setSelectedWork(work);
         setStatus(work.originalCharacterName ? GameStatus.Start : GameStatus.CharacterCreation);
-    });
+    }
   };
 
   const handleStartOriginal = () => {
@@ -731,7 +743,12 @@ const App = () => {
   };
 
   const handleStartCharacterCreation = () => setStatus(GameStatus.CharacterCreation);
-  const handleStartWorldCreation = () => handleStartNewGame(() => setStatus(GameStatus.WorldCreation));
+  
+  const handleStartWorldCreation = () => {
+    if (prepareForNewGame()) {
+        setStatus(GameStatus.WorldCreation);
+    }
+  };
   
   const handleCreateCustomWork = (data: { title: string, author: string, content: string }) => {
     const customWork = createCustomLiteraryWork(data.title, data.author, data.content);
@@ -898,6 +915,8 @@ const App = () => {
                                 />;
       case GameStatus.CharacterCreation:
         return selectedWork && <CharacterCreationScreen work={selectedWork} onSubmit={handleStartFanfic} onBack={resetToModeSelection} savedCharacters={savedCharacters} onSaveCharacter={handleSaveCharacter} onDeleteCharacter={handleDeleteCharacter} />;
+      case GameStatus.StoryStarting:
+        return <StoryStartingScreen activeAI={activeAI} />;
       case GameStatus.Playing:
         return selectedWork && <GameScreen 
                                   history={history} 
