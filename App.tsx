@@ -198,12 +198,36 @@ const ModeSelectionScreen = ({ work, onStartAsOriginal, onStartFanfic, onBack, i
   </div>
 );
 
-const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSaveCharacter }: { work: Work, onSubmit: (character: CharacterData) => void, onBack: () => void, savedCharacters: Character[], onSaveCharacter: (character: CharacterData) => void }) => {
+const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSaveCharacter, onDeleteCharacter }: { work: Work, onSubmit: (character: CharacterData) => void, onBack: () => void, savedCharacters: Character[], onSaveCharacter: (character: CharacterData) => void, onDeleteCharacter: (id: string) => void }) => {
   const [character, setCharacter] = useState<CharacterData>({ name: '', appearance: '', personality: '', background: '' });
   const [shouldSave, setShouldSave] = useState(true);
 
+  const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
+  const [customTraits, setCustomTraits] = useState('');
+  const [selectedCharacterId, setSelectedCharacterId] = useState<string | null>(null);
+
+  const personalityTraits = [
+    'Hiền lành', 'Ít nói', 'Quật cường', 'Dũng cảm', 'Gian xảo', 
+    'Kiêu ngạo', 'Hào hiệp', 'Nhút nhát', 'Nóng nảy', 'Tò mò', 
+    'Lãng mạn', 'Thực tế'
+  ];
+
+  useEffect(() => {
+    const customTraitArray = customTraits.split(',').map(t => t.trim()).filter(Boolean);
+    const allTraits = [...selectedTraits, ...customTraitArray];
+    const uniqueTraits = [...new Set(allTraits)];
+    setCharacter(c => ({ ...c, personality: uniqueTraits.join(', ') }));
+  }, [selectedTraits, customTraits]);
+
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setCharacter({ ...character, [e.target.name]: e.target.value });
   
+  const handleToggleTrait = (trait: string) => {
+    setSelectedTraits(prev => 
+      prev.includes(trait) ? prev.filter(t => t !== trait) : [...prev, trait]
+    );
+  };
+
   const isFormValid = useMemo(() => (
     character.name.trim() !== '' &&
     character.appearance.trim() !== '' &&
@@ -222,14 +246,35 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSa
 
   const handleSelectCharacter = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
+    setSelectedCharacterId(selectedId || null);
+
     if (!selectedId) {
       setCharacter({ name: '', appearance: '', personality: '', background: '' });
+      setSelectedTraits([]);
+      setCustomTraits('');
       return;
     }
     const selectedChar = savedCharacters.find(c => c.id === selectedId);
     if (selectedChar) {
       const { id, ...charData } = selectedChar;
       setCharacter(charData);
+
+      const traits = charData.personality.split(',').map(t => t.trim());
+      const predefined = traits.filter(t => personalityTraits.includes(t));
+      const custom = traits.filter(t => !personalityTraits.includes(t));
+      setSelectedTraits(predefined);
+      setCustomTraits(custom.join(', '));
+    }
+  };
+  
+  const handleDeleteClick = () => {
+    if (selectedCharacterId) {
+      onDeleteCharacter(selectedCharacterId);
+      // Reset form state
+      setSelectedCharacterId(null);
+      setCharacter({ name: '', appearance: '', personality: '', background: '' });
+      setSelectedTraits([]);
+      setCustomTraits('');
     }
   };
 
@@ -239,18 +284,33 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSa
       <p className="text-gray-300 mb-8 text-center">Hãy thổi hồn cho nhân vật của bạn để bắt đầu một câu chuyện mới trong thế giới của <span className="font-bold">{work.title}</span>.</p>
       
       {savedCharacters.length > 0 && (
-        <div className="mb-8">
-          <label htmlFor="character-select" className="block text-sm font-bold text-gray-300 mb-2">Hoặc chọn nhân vật đã có</label>
-          <select
-            id="character-select"
-            onChange={handleSelectCharacter}
-            className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm"
-          >
-            <option value="">-- Tạo một nhân vật mới --</option>
-            {savedCharacters.map(char => (
-              <option key={char.id} value={char.id}>{char.name}</option>
-            ))}
-          </select>
+        <div className="mb-8 flex items-end gap-2">
+            <div className="flex-grow">
+                <label htmlFor="character-select" className="block text-sm font-bold text-gray-300 mb-2">Hoặc chọn nhân vật đã có</label>
+                <select
+                    id="character-select"
+                    onChange={handleSelectCharacter}
+                    value={selectedCharacterId || ''}
+                    className="w-full px-4 py-3 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500 shadow-sm"
+                >
+                    <option value="">-- Tạo một nhân vật mới --</option>
+                    {savedCharacters.map(char => (
+                    <option key={char.id} value={char.id}>{char.name}</option>
+                    ))}
+                </select>
+            </div>
+            {selectedCharacterId && (
+                <button
+                    type="button"
+                    onClick={handleDeleteClick}
+                    className="p-3 text-gray-400 bg-gray-700 hover:bg-red-800 hover:text-white rounded-lg transition-colors border border-gray-600 hover:border-red-700"
+                    title="Xóa nhân vật đã chọn"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                </button>
+            )}
         </div>
       )}
 
@@ -264,8 +324,34 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onSa
           <textarea id="appearance" name="appearance" value={character.appearance} onChange={handleChange} rows={3} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Thân hình gầy gò, nước da ngăm đen..." required />
         </div>
         <div>
-          <label htmlFor="personality" className="block text-sm font-bold text-gray-300 mb-2">Tính cách</label>
-          <textarea id="personality" name="personality" value={character.personality} onChange={handleChange} rows={3} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Hiền lành, ít nói nhưng quật cường..." required />
+          <label className="block text-sm font-bold text-gray-300 mb-2">Tính cách</label>
+          <div className="flex flex-wrap gap-2 mb-3">
+              {personalityTraits.map(trait => {
+                  const isSelected = selectedTraits.includes(trait);
+                  return (
+                      <button
+                          key={trait}
+                          type="button"
+                          onClick={() => handleToggleTrait(trait)}
+                          className={`px-3 py-1.5 rounded-full text-sm font-semibold transition-colors border ${
+                              isSelected
+                                  ? 'bg-amber-600 border-amber-500 text-white'
+                                  : 'bg-gray-700 border-gray-600 text-gray-300 hover:bg-gray-600 hover:border-gray-500'
+                          }`}
+                      >
+                          {trait}
+                      </button>
+                  );
+              })}
+          </div>
+          <input
+              type="text"
+              name="customPersonality"
+              value={customTraits}
+              onChange={(e) => setCustomTraits(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500"
+              placeholder="Hoặc nhập các tính cách khác, cách nhau bằng dấu phẩy..."
+          />
         </div>
         <div>
           <label htmlFor="background" className="block text-sm font-bold text-gray-300 mb-2">Hoàn cảnh</label>
@@ -631,6 +717,19 @@ const App = () => {
     });
   };
 
+  const handleDeleteCharacter = (idToDelete: string) => {
+    const characterToDelete = savedCharacters.find(c => c.id === idToDelete);
+    if (!characterToDelete) return;
+
+    if (window.confirm(`Bạn có chắc muốn xóa nhân vật "${characterToDelete.name}"? Hành động này không thể hoàn tác.`)) {
+        setSavedCharacters(prev => {
+            const newChars = prev.filter(c => c.id !== idToDelete);
+            localStorage.setItem(CHARACTERS_SAVE_KEY, JSON.stringify(newChars));
+            return newChars;
+        });
+    }
+  };
+
   const handleStartCharacterCreation = () => setStatus(GameStatus.CharacterCreation);
   const handleStartWorldCreation = () => handleStartNewGame(() => setStatus(GameStatus.WorldCreation));
   
@@ -798,7 +897,7 @@ const App = () => {
                                   onNsfwToggle={setIsNsfwEnabled}
                                 />;
       case GameStatus.CharacterCreation:
-        return selectedWork && <CharacterCreationScreen work={selectedWork} onSubmit={handleStartFanfic} onBack={resetToModeSelection} savedCharacters={savedCharacters} onSaveCharacter={handleSaveCharacter} />;
+        return selectedWork && <CharacterCreationScreen work={selectedWork} onSubmit={handleStartFanfic} onBack={resetToModeSelection} savedCharacters={savedCharacters} onSaveCharacter={handleSaveCharacter} onDeleteCharacter={handleDeleteCharacter} />;
       case GameStatus.Playing:
         return selectedWork && <GameScreen 
                                   history={history} 
