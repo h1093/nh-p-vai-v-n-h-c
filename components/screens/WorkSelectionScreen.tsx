@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import { Work, SaveSlot } from '../../types';
 import ChoiceButton from '../ChoiceButton';
 
@@ -12,13 +12,15 @@ interface WorkSelectionScreenProps {
     onLoadGame: (id: string) => void;
     onDeleteGame: (id: string) => void;
     onExportGame: (id: string) => void;
+    onImportGame: (file: File) => void;
 }
 
 const WorkSelectionScreen = ({
     works, savedGames, onSelectWork, onCreateCustom, onChangeApiKey,
-    onShowChangelog, onLoadGame, onDeleteGame, onExportGame
+    onShowChangelog, onLoadGame, onDeleteGame, onExportGame, onImportGame
 }: WorkSelectionScreenProps) => {
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const sortedSavedGames = [...savedGames].sort((a, b) => b.timestamp - a.timestamp);
 
     const formatTimestamp = (ts: number) => {
@@ -26,6 +28,19 @@ const WorkSelectionScreen = ({
             day: '2-digit', month: '2-digit', year: 'numeric',
             hour: '2-digit', minute: '2-digit'
         });
+    };
+
+    const handleImportClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            onImportGame(file);
+        }
+        // Reset the input value to allow uploading the same file again
+        event.target.value = '';
     };
 
     return (
@@ -112,6 +127,19 @@ const WorkSelectionScreen = ({
                 >
                     Thay đổi API Key
                 </button>
+                <button
+                    onClick={handleImportClick}
+                    className="text-gray-400 hover:text-white underline text-sm font-semibold"
+                >
+                    Nhập file save
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    accept=".json,application/json"
+                    className="hidden"
+                />
             </div>
         </div>
     );

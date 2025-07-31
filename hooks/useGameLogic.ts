@@ -1,9 +1,3 @@
-
-
-
-
-
-
 import { useState, useCallback, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -482,6 +476,64 @@ export const useGameLogic = () => {
         }
     }, [savedGames]);
 
+    const handleImportGame = useCallback(async (file: File) => {
+        if (!file) return;
+    
+        try {
+            const text = await file.text();
+            const importedGameState: GameState = JSON.parse(text);
+    
+            // Validation
+            if (!importedGameState.id || !importedGameState.character?.name || !importedGameState.history || !importedGameState.selectedWorkId) {
+                throw new Error("File save không chứa đủ dữ liệu cần thiết.");
+            }
+    
+            // Re-create Work object
+            let work: Work | undefined = LITERARY_WORKS.find(w => w.id === importedGameState.selectedWorkId);
+            if (!work && importedGameState.customWorkData) {
+                work = createCustomLiteraryWork(
+                    importedGameState.customWorkData.title,
+                    importedGameState.customWorkData.author,
+                    importedGameState.customWorkData.content
+                );
+            }
+            if (!work) {
+                throw new Error(`Không tìm thấy tác phẩm với ID: ${importedGameState.selectedWorkId}`);
+            }
+    
+            // Create SaveSlot
+            const newSaveSlot: SaveSlot = {
+                id: importedGameState.id,
+                version: CURRENT_SAVE_VERSION,
+                timestamp: Date.now(),
+                characterName: importedGameState.character.name,
+                workTitle: work.title,
+                gameState: importedGameState,
+            };
+    
+            // Update Saved Games State
+            setSavedGames(prev => {
+                const existingIndex = prev.findIndex(s => s.id === newSaveSlot.id);
+                if (existingIndex > -1) {
+                    const updatedGames = [...prev];
+                    updatedGames[existingIndex] = newSaveSlot;
+                    alert("Đã cập nhật màn chơi đã có bằng file import.");
+                    return updatedGames;
+                }
+                alert("Nhập file save thành công!");
+                return [...prev, newSaveSlot];
+            });
+            
+            setError(null);
+    
+        } catch (err) {
+            console.error("Lỗi khi nhập file save:", err);
+            const message = err instanceof Error ? err.message : "Định dạng file JSON không hợp lệ.";
+            alert(`Lỗi khi nhập file save: ${message}`);
+            setError(`Lỗi khi nhập file save: ${message}`);
+        }
+    }, [setSavedGames, setError]);
+
     const handleDeleteCharacter = useCallback((charId: string) => {
         if(window.confirm("Bạn có chắc muốn xóa nhân vật này?")) {
             setSavedCharacters(prev => prev.filter(c => c.id !== charId));
@@ -581,7 +633,7 @@ export const useGameLogic = () => {
         handleEquipItem, handleUnequipItem, handleConfess, handlePropose, handleChatWithCompanion,
         handleGiveGiftToCompanion, handleAddLoreEntry, handleUpdateLoreEntry, handleDeleteLoreEntry,
         handleAddSuggestedLoreEntry, handleDismissSuggestedLoreEntry,
-        handleLoadGame, handleDeleteGame, handleExportGame, handleDeleteCharacter,
+        handleLoadGame, handleDeleteGame, handleExportGame, handleImportGame, handleDeleteCharacter,
         // Constants
         LITERARY_WORKS, CHANGELOG_ENTRIES,
     };

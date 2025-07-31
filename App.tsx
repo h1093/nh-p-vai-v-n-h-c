@@ -71,6 +71,7 @@ const App = () => {
     handleLoadGame,
     handleDeleteGame,
     handleExportGame,
+    handleImportGame,
     handleDeleteCharacter,
     LITERARY_WORKS,
     CHANGELOG_ENTRIES,
@@ -92,6 +93,7 @@ const App = () => {
             onLoadGame={handleLoadGame}
             onDeleteGame={handleDeleteGame}
             onExportGame={handleExportGame}
+            onImportGame={handleImportGame}
           />
         );
       case GameStatus.WorldCreation:
