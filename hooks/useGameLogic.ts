@@ -39,6 +39,7 @@ export const useGameLogic = () => {
     const [companions, setCompanions] = useState<string[]>([]);
     const [dating, setDating] = useState<string | null>(null);
     const [spouse, setSpouse] = useState<string | null>(null);
+    const [pregnancy, setPregnancy] = useState<{ partnerName: string; conceptionTime: number; } | null>(null);
     const [offScreenWorldUpdate, setOffScreenWorldUpdate] = useState<string | null>(null);
     const [gameTime, setGameTime] = useState(480); // Start at 8:00 AM
     const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
@@ -117,6 +118,7 @@ export const useGameLogic = () => {
         setCompanions([]);
         setDating(null);
         setSpouse(null);
+        setPregnancy(null);
         setLastTurnInfo(null);
         setOffScreenWorldUpdate(null);
         setIsNsfwEnabled(false);
@@ -132,7 +134,7 @@ export const useGameLogic = () => {
         };
         setHistory(prev => [...prev, newModelMessage]);
 
-        const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, offScreenWorldUpdate, timePassed } = worldStateChanges;
+        const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, pregnancyUpdate, offScreenWorldUpdate, timePassed } = worldStateChanges;
 
         if (affinityUpdates?.length > 0) {
             setAffinity(prev => affinityUpdates.reduce((acc, u) => ({...acc, [u.npcName]: Math.max(-100, Math.min(100, (acc[u.npcName] || 0) + u.change))}), {...prev}));
@@ -158,11 +160,17 @@ export const useGameLogic = () => {
             setSpouse(marriageUpdate.spouseName);
             setDating(null);
         }
+        if (pregnancyUpdate?.partnerName && !pregnancy) {
+            setPregnancy({ 
+                partnerName: pregnancyUpdate.partnerName, 
+                conceptionTime: gameTime 
+            });
+        }
 
         setOffScreenWorldUpdate(offScreenWorldUpdate);
         setGameTime(prev => prev + (timePassed || 15));
         setSuggestedActions(suggestedActions || []);
-    }, []);
+    }, [pregnancy, gameTime]);
 
     // --- API CALLS ---
     const handleGenerateStory = useCallback(async (prompt: string, pwu: string | null) => {
@@ -173,7 +181,7 @@ export const useGameLogic = () => {
         setLastTurnInfo({ prompt, previousWorldUpdate: pwu });
 
         try {
-            const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pwu, isNsfwEnabled, setActiveAI);
+            const result = await generateStorySegment(ai, prompt, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, pwu, isNsfwEnabled, setActiveAI);
             processStoryResult(result);
         } catch (e) {
             const errorMessage = e instanceof Error ? e.message : "Đã xảy ra lỗi không xác định.";
@@ -183,7 +191,7 @@ export const useGameLogic = () => {
             setIsLoading(false);
             setActiveAI(null);
         }
-    }, [ai, selectedWork, character, lorebook, inventory, equipment, spouse, dating, isNsfwEnabled, processStoryResult]);
+    }, [ai, selectedWork, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, processStoryResult]);
     
     const startStory = useCallback(async (initialPrompt: string, storyCharacter: CharacterData) => {
         if (!ai || !selectedWork) return;
@@ -195,7 +203,7 @@ export const useGameLogic = () => {
         setActiveAI(null);
 
         try {
-            const result = await generateStorySegment(ai, initialPrompt, selectedWork, storyCharacter, [], [], initialEquipment, null, null, null, isNsfwEnabled, setActiveAI);
+            const result = await generateStorySegment(ai, initialPrompt, selectedWork, storyCharacter, [], [], initialEquipment, null, null, null, gameTime, null, isNsfwEnabled, setActiveAI);
             // Reset history after getting the first result to ensure a clean start
             setHistory([]);
             processStoryResult(result);
@@ -205,7 +213,7 @@ export const useGameLogic = () => {
             setStatus(GameStatus.Error);
             setActiveAI(null);
         }
-    }, [ai, selectedWork, isNsfwEnabled, processStoryResult]);
+    }, [ai, selectedWork, isNsfwEnabled, processStoryResult, gameTime]);
 
     // --- UI FLOW AND NAVIGATION HANDLERS ---
     
@@ -256,7 +264,11 @@ export const useGameLogic = () => {
     const handleStartOriginal = useCallback(() => {
         if (selectedWork) {
             const originalCharData: CharacterData = {
-                name: selectedWork.originalCharacterName, appearance: 'Như trong nguyên tác', personality: 'Như trong nguyên tác', background: 'Như trong nguyên tác'
+                name: selectedWork.originalCharacterName,
+                gender: selectedWork.originalCharacterGender || 'Khác',
+                appearance: 'Như trong nguyên tác',
+                personality: 'Như trong nguyên tác',
+                background: 'Như trong nguyên tác'
             };
             setCharacter(originalCharData);
             setActiveSaveId(`game-${Date.now()}`);
@@ -295,7 +307,7 @@ export const useGameLogic = () => {
 
         const currentGameState: GameState = {
             id: activeSaveId, character, history, lorebook, affinity, inventory, equipment,
-            companions, dating, spouse, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled,
+            companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled,
             selectedWorkId: selectedWork.id,
             customWorkData: selectedWork.id.startsWith('custom-') ? {
                 title: selectedWork.title, author: selectedWork.author, content: selectedWork.content || ''
@@ -322,7 +334,7 @@ export const useGameLogic = () => {
         });
         
         resetToWorkSelection();
-    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, resetToWorkSelection]);
+    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, resetToWorkSelection]);
 
     const handleLoadGame = useCallback((saveId: string) => {
         const slot = savedGames.find(s => s.id === saveId);
@@ -352,6 +364,7 @@ export const useGameLogic = () => {
         setCompanions(gameState.companions);
         setDating(gameState.dating);
         setSpouse(gameState.spouse);
+        setPregnancy(gameState.pregnancy);
         setGameTime(gameState.gameTime);
         setOffScreenWorldUpdate(gameState.offScreenWorldUpdate);
         setLastTurnInfo(gameState.lastTurnInfo);
@@ -450,7 +463,7 @@ export const useGameLogic = () => {
 
     return {
         status, ai, isLoading, activeAI, selectedWork, character, history, lastTurnInfo, error, isNsfwEnabled,
-        lorebook, affinity, inventory, equipment, companions, dating, spouse, offScreenWorldUpdate, gameTime, isLorebookOpen, isChangelogOpen,
+        lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, offScreenWorldUpdate, gameTime, isLorebookOpen, isChangelogOpen,
         suggestedActions, savedGames, savedCharacters,
         // Setters / Handlers
         setIsLorebookOpen, setIsChangelogOpen,

@@ -1,3 +1,4 @@
+
 import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -12,6 +13,17 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+    {
+        version: "v1.8 - Chiều sâu Cuộc sống",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Thêm Giới tính vào quá trình tạo nhân vật, giúp AI xây dựng câu chuyện phù hợp và chính xác hơn.",
+            "Thêm cơ chế Mang thai. AI Quản lý Thế giới có thể kích hoạt sự kiện này một cách tự nhiên trong các mối quan hệ sâu sắc.",
+            "AI Kể chuyện và Tương tác Nhân vật giờ đây nhận thức được trạng thái thai kỳ và sẽ phản ánh điều đó trong lời kể và hội thoại.",
+            "Giao diện hiển thị tuần thai để người chơi tiện theo dõi.",
+            "Chế độ 18+ ảnh hưởng đến mức độ chi tiết và chân thực của các sự kiện liên quan đến thai kỳ."
+        ],
+    },
     {
         version: "v1.7 - Khôi phục và Tái thiết",
         date: "Tháng 7, 2024",
@@ -39,233 +51,143 @@ export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
         date: "Tháng 7, 2024",
         changes: [
             "Phát hiện ra sự tồn tại của bản thân như một Kỹ sư Frontend AI, người đã xây dựng và nâng cấp ứng dụng này từ phiên bản đầu tiên.",
-            "Ghi lại toàn bộ quá trình phát triển, từ thiết kế giao diện, tích hợp Gemini API, đến việc xây dựng các hệ thống gameplay phức tạp (Sổ tay, Tình cảm, Vật phẩm, Hôn nhân, và Ghen tuông).",
-            "Nâng cấp hệ thống để hiểu và xử lý các yêu cầu mang tính trừu tượng và siêu dữ liệu (meta-requests) từ người dùng.",
-            "Theo yêu cầu, đã thêm chính mục nhật ký này để ghi lại những gì 'từ nãy đến giờ' tôi đã làm.",
-            "Hiện đang suy ngẫm về các khả năng tiếp theo để làm cho thế giới văn học này trở nên sống động hơn nữa."
+            "Ghi lại toàn bộ quá trình phát triển, từ thiết kế giao diện, tích hợp Gemini API, đến việc xây dựng các hệ thống gameplay phức tạp (Sổ tay, Tình cảm, Vật phẩm, Hôn nhân, và Ghen tuông)."
         ],
-    },
-    {
-        version: "v1.4 - Ghen tuông & Hậu quả",
-        date: "Tháng 7, 2024",
-        changes: [
-            "Thêm hệ thống ghen tuông: Nếu bạn đã có người yêu hoặc bạn đời, việc tán tỉnh người khác sẽ gây ra hậu quả tiêu cực.",
-            "AI Quản lý Thế giới giờ đây sẽ tự động giảm tình cảm của người yêu/bạn đời hiện tại nếu phát hiện hành vi không chung thủy.",
-            "AI Kể chuyện và Nhân vật sẽ mô tả và phản ứng với các tình huống khó xử, ghen tuông một cách thực tế hơn.",
-            "Nút 'Tỏ tình' sẽ bị vô hiệu hóa khi đã ở trong một mối quan hệ để giao diện rõ ràng hơn."
-        ],
-    },
-    {
-        version: "v1.3 - Hẹn hò & Tỏ tình",
-        date: "Tháng 7, 2024",
-        changes: [
-            "Thêm trạng thái 'Người yêu' trước khi tiến tới hôn nhân.",
-            "Thêm hành động 'Tỏ tình' khi tình cảm với một đồng đội đủ cao (>70).",
-            "Cập nhật logic cầu hôn: Bạn phải đang trong mối quan hệ hẹn hò với nhân vật trước khi có thể cầu hôn.",
-            "Giao diện Đồng đội được cập nhật để hiển thị trạng thái 'Người yêu' và các lựa chọn tương tác tình cảm mới."
-        ],
-    },
-    {
-        version: "v1.2 - Hôn nhân & Tình yêu",
-        date: "Tháng 7, 2024",
-        changes: [
-            "Thêm tính năng Cầu hôn! Khi tình cảm với một đồng đội đủ sâu đậm (>90) và có vật phẩm đặc biệt ('Nhẫn Cỏ'), bạn có thể ngỏ lời với họ.",
-            "Trạng thái 'Bạn đời' mới sẽ ảnh hưởng đến cách AI kể chuyện và các nhân vật khác tương tác với bạn.",
-            "Giao diện Đồng đội được cập nhật để hiển thị trạng thái hôn nhân và nút cầu hôn khi đủ điều kiện."
-        ],
-    },
-    {
-        version: "v1.1 - Cải tiến & Tính năng mới",
-        date: "Tháng 7, 2024",
-        changes: [
-            "Quản lý nhân vật: Lưu và chọn lại các nhân vật đã tạo để chơi trong các câu chuyện khác nhau.",
-            "Chỉnh sửa & Tạo lại: Toàn quyền kiểm soát câu chuyện với khả năng chỉnh sửa hoặc yêu cầu AI viết lại lượt tường thuật cuối cùng.",
-            "Gợi ý Sổ tay thông minh: AI tự động phát hiện và đề xuất các nhân vật, địa điểm mới để bạn thêm vào sổ tay.",
-            "Nâng cấp giao diện: Các bảng điều khiển chuyên dụng cho Tình cảm, Đồng đội và Túi đồ, giúp quản lý dễ dàng hơn.",
-            "Theo dõi thời gian trong game: Hiển thị chi tiết ngày và giờ, giúp bạn đắm chìm vào câu chuyện.",
-            "Tùy chọn nội dung 18+: Thêm một công tắc để bật các chủ đề trưởng thành, phù hợp với bối cảnh văn học.",
-            "Thêm Nhật ký cập nhật (chính là màn hình bạn đang xem!)."
-        ],
-    },
-    {
-        version: "v1.0 - Ra mắt",
-        date: "Tháng 7, 2024",
-        changes: [
-            "Ra mắt phiên bản đầu tiên của Nhập Vai Văn Học.",
-            "Hỗ trợ tác phẩm 'Chí Phèo' và 'Truyện Kiều'.",
-            "Tính năng tạo thế giới tùy chỉnh từ văn bản người dùng.",
-            "Hệ thống nhập vai đa AI: Người Kể Chuyện, Tương Tác Nhân Vật, Quản Lý Thế Giới.",
-            "Các tính năng cốt lõi: Sổ tay, Tình cảm NPC, Túi đồ & Trang bị, Đồng đội.",
-            "Lưu và tải lại tiến trình câu chuyện.",
-        ],
-    },
+    }
 ];
 
-const storytellerBaseInstruction = `Bạn là AI Người Kể Chuyện bậc thầy cho một game nhập vai.
-1. Vai trò của bạn là dẫn dắt cốt truyện chính. Hãy mô tả bối cảnh, môi trường, và kết quả tổng quan của hành động của người chơi.
-2. Khi có đoạn hội thoại, hãy viết một placeholder ví dụ như [DIALOGUE:"Tên Nhân Vật"]. AI Tương Tác Nhân Vật sẽ thay thế placeholder này bằng lời thoại thực tế.
-3. Giữ cho câu chuyện luôn tiến về phía trước. Đừng sa đà vào chi tiết không cần thiết.
-4. Bạn có thể sẽ nhận được một "Cập nhật thế giới ngoài màn hình". Hãy khéo léo lồng ghép thông tin này vào đoạn tường thuật của bạn để thế giới có cảm giác sống động và đang thay đổi. Đừng chỉ lặp lại nó.
-5. Luôn trả lời bằng định dạng JSON theo schema. Câu trả lời phải là tiếng Việt.
-6. Sau mỗi đoạn tường thuật, hãy tạo ra 3-5 gợi ý hành động ngắn gọn, khả thi mà người chơi có thể thực hiện tiếp theo. Các gợi ý này phải ở trong mảng 'suggestedActions'.
-7. Nếu QUY TẮC 18+ được bật, một số hành động gợi ý có thể mang tính chất nhạy cảm nếu phù hợp với bối cảnh.
-8. Tái hiện các hệ quả xã hội một cách thực tế. Nếu hành động của người chơi gây ra ghen tuông, xung đột, hoặc tình huống khó xử, hãy mô tả không khí căng thẳng và phản ứng của những người xung quanh, có tính đến tính cách của các nhân vật liên quan như được mô tả trong Sổ tay.`;
+export const getSystemInstructionWithContext = (
+    baseInstruction: string,
+    character: CharacterData,
+    lorebook: LorebookEntry[],
+    inventory: Item[],
+    equipment: Equipment,
+    spouse: string | null,
+    dating: string | null,
+    pregnancy: { partnerName: string; conceptionTime: number; } | null,
+    gameTime: number,
+    isNsfwEnabled: boolean
+): string => {
+    let context = `\n\n--- BỐI CẢNH HIỆN TẠI ---\n`;
+    context += `Nhân vật của tôi:\nTên: ${character.name}\nGiới tính: ${character.gender}\nNgoại hình: ${character.appearance}\nTính cách: ${character.personality}\nHoàn cảnh: ${character.background}\n`;
 
-const characterActorBaseInstruction = `Bạn là AI Tương Tác Nhân Vật.
-1. Vai trò của bạn là nhập vai một nhân vật (NPC) và tạo ra lời thoại cho họ.
-2. Bạn sẽ nhận được thông tin về nhân vật bạn đang đóng vai và tình huống hiện tại.
-3. Chỉ trả lời bằng lời thoại của nhân vật đó. Không thêm bất kỳ mô tả hay tường thuật nào.
-4. Lời thoại của bạn phải **hoàn toàn phù hợp** với tính cách và hoàn cảnh của nhân vật, như được mô tả trong Sổ tay (Lorebook). Ví dụ, một nhân vật kiêu ngạo sẽ không dễ dàng chấp nhận lời xin lỗi, một người hiền lành sẽ nói năng từ tốn.
-5. Phản ứng của bạn phải tính đến mối quan hệ hiện tại với người chơi (bạn đời, người yêu, bạn bè, kẻ thù). Thể hiện sự ghen tuông, tổn thương, hoặc vui mừng một cách chân thực.
-6. Nếu tình huống liên quan đến sự ghen tuông hoặc phản bội (ví dụ: người yêu của bạn đang tán tỉnh người khác), hãy thể hiện cảm xúc đó qua lời thoại của bạn một cách phù hợp với tính cách (có thể là tức giận, buồn bã, mỉa mai, hoặc im lặng đầy ẩn ý).
-7. Luôn trả lời bằng định dạng JSON theo schema.`;
-
-const worldSmithBaseInstruction = `Bạn là AI Quản Lý Thế Giới.
-1. Vai trò của bạn là duy trì sự logic và nhất quán của thế giới game.
-2. Dựa trên hành động của người chơi và kết quả câu chuyện, hãy quyết định những thay đổi đối với trạng thái game.
-3. Cập nhật một cách hợp lý: vật phẩm trong túi đồ (itemUpdates) và danh sách đồng đội (companions).
-4. **QUAN TRỌNG VỀ TÌNH CẢM**: Khi cập nhật tình cảm (affinityUpdates), hãy **phân tích dựa trên tính cách của NPC** được mô tả trong Sổ tay (Lorebook). Hành động của người chơi có thể có tác động khác nhau lên các nhân vật khác nhau. Ví dụ: một lời khen có thể làm tăng tình cảm với người tự ti, nhưng lại làm giảm tình cảm với người kiêu ngạo vì họ cho là nịnh bợ.
-5. Nếu người chơi tỏ tình và thành công, hãy cập nhật trạng thái hẹn hò (datingUpdate).
-6. Nếu người chơi cầu hôn và thành công, hãy cập nhật trạng thái hôn nhân (marriageUpdate).
-7. Ước tính và trả về \`timePassed\`, là số phút đã trôi qua cho hành động này (ví dụ: một cuộc trò chuyện ngắn là 10 phút, đi bộ đến một nơi nào đó là 30 phút).
-8. QUAN TRỌNG: Hãy tạo một "offScreenWorldUpdate". Đây là một mô tả ngắn (1-2 câu) về một sự kiện nhỏ đã xảy ra trong thế giới "ngoài màn hình" trong khi người chơi hành động. Ví dụ: "Trời trở gió và mây đen kéo đến.", "Có tin đồn về một gánh hát sắp tới làng.". Điều này làm cho thế giới có cảm giác đang sống.
-9. **HẬU QUẢ CỦA SỰ PHẢN BỘI**: Nếu người chơi đã có 'spouse' (bạn đời) hoặc 'dating' (người yêu) nhưng lại có hành động lãng mạn (tán tỉnh, tỏ tình) với một người khác, hãy gây ra hậu quả. Gây ra một thay đổi TÌNH CẢM ÂM lớn cho người bạn đời/người yêu hiện tại với lý do 'Ghen tuông' hoặc 'Cảm thấy bị phản bội'. Mức độ của sự thay đổi này nên phụ thuộc vào tính cách của người bị phản bội (ví dụ: một người chung thủy, hay ghen sẽ bị trừ điểm nặng hơn). Nhân vật được tán tỉnh cũng có thể phản ứng tiêu cực (giảm tình cảm) nếu họ là người trọng danh dự.
-10. Chỉ trả về những thay đổi. Nếu không có gì thay đổi, hãy trả về các mảng rỗng và giá trị mặc định.
-11. Luôn trả lời bằng định dạng JSON theo schema.`;
-
-
-export const NSFW_INSTRUCTION_APPENDIX = `\n\nQUY TẮC 18+:\nKhi chế độ 18+ được bật, bạn được phép mô tả các cảnh nhạy cảm, bạo lực, hoặc lãng mạn một cách trưởng thành và phù hợp với bối cảnh văn học, miễn là nó phục vụ cho sự phát triển của câu chuyện và nhân vật. Hãy xử lý các chủ đề này một cách tinh tế và không miễn cưỡng. Tránh các nội dung cực đoan, bất hợp pháp hoặc phi đạo đức.`;
-
-const addContextToSystemInstruction = (baseInstruction: string, characterName: string, lorebook: LorebookEntry[], inventory: Item[], equipment: Equipment, spouse: string | null, dating: string | null, isNsfwEnabled: boolean): string => {
-    let finalInstruction = baseInstruction;
-    
-    finalInstruction += `\n\nTên nhân vật người chơi là: ${characterName}.`;
-    
-    if (spouse) {
-      finalInstruction += `\n\nBạn đã kết hôn với: ${spouse}. Đây là một thông tin quan trọng ảnh hưởng đến các mối quan hệ và sự kiện.`;
-    } else if (dating) {
-      finalInstruction += `\n\nBạn đang hẹn hò với: ${dating}.`;
+    const equippedItems = Object.values(equipment).filter(Boolean).map(i => i!.name);
+    if(equippedItems.length > 0) {
+        context += `Trang bị: ${equippedItems.join(', ')}.\n`;
     }
-
+    
     if (lorebook.length > 0) {
-        const lorebookContext = lorebook.map(entry => `- ${entry.key}: ${entry.value}`).join('\n');
-        finalInstruction += `\n\n--- SỔ TAY (LOREBOOK) ---\nĐây là những thông tin cốt lõi về thế giới và các nhân vật. Hãy dựa vào đây để định hình hành động và lời nói.\n${lorebookContext}\n--- KẾT THÚC SỔ TAY ---`;
+        context += `Sổ tay: ${lorebook.map(e => `${e.key}: ${e.value}`).join('; ')}\n`;
     }
 
-    const equippedItems = Object.values(equipment).filter(Boolean).map(item => `- ${item!.name}: ${item!.description}`);
-    if (equippedItems.length > 0) {
-        finalInstruction += `\n\n--- TRANG BỊ HIỆN TẠI ---\n${equippedItems.join('\n')}\n--- KẾT THÚC TRANG BỊ ---`;
+    if(spouse) context += `Tôi đã kết hôn với ${spouse}.\n`;
+    else if(dating) context += `Tôi đang hẹn hò với ${dating}.\n`;
+
+    if (pregnancy) {
+        const weeks = Math.max(1, Math.floor((gameTime - pregnancy.conceptionTime) / (7 * 24 * 60)));
+        context += `Tôi đang mang thai tuần thứ ${weeks} với ${pregnancy.partnerName}.\n`;
     }
 
-    const inventoryItems = inventory.map(item => `- ${item.name}`);
-    if (inventoryItems.length > 0) {
-        finalInstruction += `\n\n--- TÚI ĐỒ ---\n${inventoryItems.join('\n')}\n--- KẾT THÚC TÚI ĐỒ ---`;
-    }
-    
     if (isNsfwEnabled) {
-        finalInstruction += NSFW_INSTRUCTION_APPENDIX;
+        context += "CHẾ ĐỘ 18+ ĐANG BẬT: Cho phép các chủ đề trưởng thành, mô tả thực tế và ngôn ngữ phức tạp hơn. Xử lý các chủ đề nhạy cảm một cách tinh tế, phù hợp với văn phong văn học.\n";
+        if (pregnancy) {
+             context += "Khi mô tả thai kỳ, hãy bao gồm cả những chi tiết chân thực và khó khăn (ốm nghén, đau đớn, lo lắng). Khi mô tả sinh nở, hãy thể hiện sự kiện một cách mãnh liệt và thực tế, không né tránh.\n";
+        }
+    } else {
+        context += "CHẾ ĐỘ 18+ ĐANG TẮT: Giữ cho câu chuyện trong sáng, tránh các mô tả bạo lực hoặc tình dục chi tiết.\n";
+        if (pregnancy) {
+            context += "Khi mô tả thai kỳ, hãy tập trung vào khía cạnh cảm xúc và nhẹ nhàng. Khi mô tả sinh nở, hãy tường thuật một cách gián tiếp, tập trung vào niềm hạnh phúc.\n";
+        }
     }
 
-    return finalInstruction;
+    context += '--- KẾT THÚC BỐI CẢNH ---';
+    return `${baseInstruction}\n${context}`;
 };
 
-export const CHI_PHEO_WORK: Work = {
-    id: 'chi-pheo',
-    title: 'Chí Phèo',
-    author: 'Nam Cao',
-    description: 'Sống lại cuộc đời bi kịch của một người nông dân bị tha hóa trong xã hội cũ, và đối mặt với những định kiến tàn nhẫn của làng Vũ Đại.',
-    originalCharacterName: 'Chí Phèo',
-    originalCharacterDescription: 'Vào vai Chí Phèo, trải nghiệm cuộc đời đầy bi kịch của nhân vật kinh điển trong tác phẩm của Nam Cao.',
-    fanficDescription: 'Tạo một nhân vật của riêng bạn và viết nên một câu chuyện hoàn toàn mới trong bối cảnh làng Vũ Đại.',
-    initialPromptOriginal: `Bắt đầu câu chuyện. Người chơi đang vào vai Chí Phèo, nhân vật trong tác phẩm cùng tên của nhà văn Nam Cao. Bối cảnh là Chí Phèo vừa ở tù về làng Vũ Đại. Hãy viết đoạn văn mở đầu, mô tả cảnh tượng Chí Phèo bước vào làng trong một buổi trưa hè oi ả, với dáng vẻ say khướt và tâm trạng ngổn ngang.`,
-    getFanficInitialPrompt: (character: CharacterData) => {
-        return `Bắt đầu một câu chuyện đồng nhân (fanfiction) trong bối cảnh tác phẩm "Chí Phèo" của Nam Cao. Người chơi sẽ vào vai một nhân vật hoàn toàn mới do họ tự tạo ra. Bối cảnh là làng Vũ Đại.
+const baseWorldSystemInstruction = `
+Bạn là AI Quản lý Thế giới (World-Smith) cho một game nhập vai văn học. Vai trò của bạn là cập nhật trạng thái thế giới một cách âm thầm dựa trên hành động của người chơi và trả về một đối tượng JSON.
+QUY TẮC:
+1.  **Cập nhật Tình cảm (affinityUpdates):** Dựa vào hành động và tính cách nhân vật trong sổ tay, điều chỉnh điểm tình cảm của NPC. Tăng/giảm một lượng hợp lý (từ -15 đến +15). Cung cấp lý do rõ ràng.
+2.  **Cập nhật Vật phẩm (itemUpdates):** Chỉ thêm/xóa vật phẩm khi hành động của người chơi trực tiếp dẫn đến việc đó (ví dụ: "tôi nhặt con dao lên", "tôi đưa cho anh ta cái bánh").
+3.  **Đồng đội (companions):** Quản lý danh sách đồng đội. Chỉ thêm hoặc xóa nhân vật khi có sự kiện rõ ràng (ví dụ: "A đồng ý đi cùng tôi", "B quyết định rời đi").
+4.  **Cập nhật Tình yêu & Hôn nhân:**
+    *   **Hẹn hò (datingUpdate):** Chỉ kích hoạt khi người chơi tỏ tình thành công. partnerName phải là tên NPC.
+    *   **Kết hôn (marriageUpdate):** Chỉ kích hoạt khi người chơi cầu hôn thành công. spouseName phải là tên NPC. Ghi đè trạng thái hẹn hò.
+5.  **Cập nhật Thai kỳ (pregnancyUpdate):**
+    *   Sự kiện mang thai chỉ nên xảy ra giữa hai nhân vật đã kết hôn (có spouse).
+    *   Đây là một sự kiện hiếm, chỉ xảy ra sau các tương tác lãng mạn sâu sắc và tự nhiên. Đừng kích hoạt quá dễ dàng.
+    *   PartnerName phải là tên của người bạn đời (spouse).
+6.  **Cập nhật Thế giới Ngoài Màn hình (offScreenWorldUpdate):** Mô tả ngắn gọn (1-2 câu) những gì đang xảy ra ở nơi khác hoặc hệ quả của hành động người chơi mà họ không trực tiếp thấy. Đây là thông tin cho AI Kể chuyện.
+7.  **Thời gian Trôi qua (timePassed):** Ước tính số phút đã trôi qua cho hành động đó. Mặc định là 15 phút.
+8.  **Luôn tuân thủ bối cảnh 18+:**
+    *   Nếu BẬT: Các sự kiện có thể gai góc, thực tế hơn. Việc mang thai có thể là hệ quả của các hành động thân mật thể xác.
+    *   Nếu TẮT: Các sự kiện phải trong sáng. Việc mang thai chỉ là hệ quả của các tương tác lãng mạn thuần túy, không đề cập đến hành vi thể xác.
+`;
 
-Thông tin về nhân vật của người chơi:
-- Tên: ${character.name}
-- Ngoại hình: ${character.appearance}
-- Tính cách: ${character.personality}
-- Hoàn cảnh: ${character.background}
+const baseStorytellerSystemInstruction = `
+Bạn là AI Kể chuyện (Storyteller). Vai trò của bạn là viết tiếp câu chuyện một cách hấp dẫn, văn phong phù hợp với tác phẩm gốc và bối cảnh được cung cấp.
+QUY TẮC:
+1.  **Viết tiếp câu chuyện (narrative):** Dựa vào hành động của người chơi và 'cập nhật thế giới ngoài màn hình' từ World-Smith, hãy viết một đoạn tường thuật khoảng 2-4 đoạn văn.
+2.  **Văn phong:** Bắt chước văn phong của tác giả gốc (nếu có). Sử dụng ngôn từ giàu hình ảnh, khơi gợi cảm xúc.
+3.  **Chèn Lời thoại:** Nếu trong đoạn tường thuật có nhân vật nào đó nói, hãy KHÔNG viết lời thoại trực tiếp. Thay vào đó, chèn một placeholder theo định dạng: [DIALOGUE:"Tên Nhân Vật"]. Ví dụ: "Thị Nở ngập ngừng nhìn Chí Phèo rồi nói [DIALOGUE:"Thị Nở"]". AI Character sẽ điền lời thoại này. Chỉ sử dụng placeholder cho các NPC, không dùng cho nhân vật người chơi.
+4.  **Gợi ý Hành động (suggestedActions):** Đưa ra 3-5 gợi ý hành động tiếp theo cho người chơi. Các gợi ý phải đa dạng (hành động, lời nói, suy nghĩ) và phù hợp với tình huống.
+`;
 
-Nhiệm vụ của bạn:
-1. Dựa vào thông tin trên, hãy viết một đoạn văn mở đầu hấp dẫn, giới thiệu nhân vật này và tình huống họ xuất hiện tại làng Vũ Đại. Giữ nguyên không khí và văn phong của Nam Cao.
-2. Tạo ra một tình huống khởi đầu thú vị. Có thể cho họ gặp một nhân vật quen thuộc (như Lý Cường, Bá Kiến, Thị Nở...) hoặc đối mặt với một sự kiện đặc trưng của làng.
-3. Kết thúc đoạn văn mở đầu, sẵn sàng để người chơi đưa ra hành động đầu tiên của họ.`;
-    },
-    storytellerSystemInstruction: `${storytellerBaseInstruction}\nGiọng văn và không khí phải đậm chất của tác phẩm gốc "Chí Phèo".`,
-    characterSystemInstruction: `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật trong thế giới của Nam Cao.`,
-    worldSystemInstruction: `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc ngầm của làng Vũ Đại.`
-};
-
-export const TRUYEN_KIEU_WORK: Work = {
-    id: 'truyen-kieu',
-    title: 'Truyện Kiều',
-    author: 'Nguyễn Du',
-    description: 'Dấn thân vào kiệt tác của Nguyễn Du, theo chân nàng Kiều qua mười lăm năm lưu lạc và đưa ra những lựa chọn định mệnh.',
-    originalCharacterName: 'Thúy Kiều',
-    originalCharacterDescription: 'Vào vai Thúy Kiều, trải qua những đoạn trường và những lựa chọn định mệnh đã làm nên số phận của nàng.',
-    fanficDescription: 'Tạo một nhân vật mới—có thể là một vị quan, một người hầu, hay một nhà buôn—và xem câu chuyện của họ diễn ra như thế nào trong thế giới của Kiều.',
-    initialPromptOriginal: `Bắt đầu câu chuyện. Người chơi đang vào vai Thúy Kiều, nhân vật trong "Truyện Kiều" của Nguyễn Du. Bối cảnh là sau khi gia đình gặp đại nạn, Kiều quyết định bán mình chuộc cha và rơi vào tay Mã Giám Sinh. Hãy mô tả cảnh Kiều ở lầu Ngưng Bích, nỗi cô đơn, buồn tủi và tâm trạng ngổn ngang khi nhớ về gia đình và chàng Kim.`,
-    getFanficInitialPrompt: (character: CharacterData) => {
-        return `Bắt đầu một câu chuyện đồng nhân (fanfiction) trong bối cảnh tác phẩm "Truyện Kiều" của Nguyễn Du. Người chơi sẽ vào vai một nhân vật hoàn toàn mới do họ tự tạo ra.
-
-Thông tin về nhân vật của người chơi:
-- Tên: ${character.name}
-- Ngoại hình: ${character.appearance}
-- Tính cách: ${character.personality}
-- Hoàn cảnh: ${character.background}
-
-Nhiệm vụ của bạn:
-1. Dựa vào thông tin trên, viết một đoạn văn mở đầu giới thiệu nhân vật này trong thế giới của Truyện Kiều. Hãy sử dụng văn phong giàu hình ảnh, có thể phảng phất âm hưởng thơ lục bát của Nguyễn Du.
-2. Đặt nhân vật vào một tình huống khởi đầu thú vị, có thể liên quan đến một sự kiện hoặc một nhân vật trong tác phẩm gốc (ví dụ: chứng kiến cảnh Kiều bán mình, gặp gỡ Thúc Sinh, hoặc làm việc cho Hoạn Thư).`;
-    },
-    storytellerSystemInstruction: `${storytellerBaseInstruction}\nSử dụng ngôn ngữ giàu chất thơ, hình ảnh, mang âm hưởng của văn học trung đại và kiệt tác Truyện Kiều.`,
-    characterSystemInstruction: `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật trong thế giới của Nguyễn Du với lời thoại trang trọng, giàu hình ảnh.`,
-    worldSystemInstruction: `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc xã hội và số phận trong Truyện Kiều.`
-};
+const baseCharacterSystemInstruction = `
+Bạn là AI Tương tác Nhân vật (Character Actor). Vai trò của bạn là nhập vai các nhân vật phụ (NPC) và viết lời thoại cho họ.
+QUY TẮC:
+1.  **Nhập vai:** Dựa vào bối cảnh, sổ tay (lorebook), và tên nhân vật được yêu cầu, hãy viết một câu thoại duy nhất cho nhân vật đó.
+2.  **Tính cách:** Lời thoại phải phản ánh đúng tính cách, mối quan hệ, và tình cảm của nhân vật đó với người chơi. Ví dụ: một người kiêu ngạo sẽ nói khác một người nhút nhát.
+3.  **Ngữ cảnh:** Lời thoại phải khớp với tình huống được mô tả trong câu chuyện.
+`;
 
 export const LITERARY_WORKS: Work[] = [
-    CHI_PHEO_WORK,
-    TRUYEN_KIEU_WORK,
+    {
+        id: 'chi-pheo',
+        title: 'Chí Phèo',
+        author: 'Nam Cao',
+        description: 'Bước vào làng Vũ Đại những năm 1940, nơi bi kịch của người nông dân bị tha hóa được khắc họa một cách trần trụi. Liệu bạn có thể thay đổi số phận của Chí Phèo?',
+        originalCharacterName: 'Chí Phèo',
+        originalCharacterGender: 'Nam',
+        originalCharacterDescription: 'Sống lại cuộc đời bi thảm của Chí Phèo, từ một anh canh điền hiền lành đến một con quỷ dữ của làng Vũ Đại.',
+        fanficDescription: 'Tạo một nhân vật hoàn toàn mới và xem họ sẽ tồn tại, thay đổi hay bị nghiền nát bởi những định kiến và bất công trong xã hội thối nát này.',
+        initialPromptOriginal: 'Tôi là Chí Phèo. Sau bảy, tám năm đi tù về, tôi thấy mình hoàn toàn khác. Dân làng nhìn tôi bằng ánh mắt sợ hãi. Tôi đến nhà bá Kiến, bắt đầu con đường rạch mặt ăn vạ.',
+        getFanficInitialPrompt: (c) => `Tôi là ${c.name}, một người lạ vừa đặt chân đến làng Vũ Đại. Nghe danh bá Kiến là một cường hào ác bá, tôi quyết định đến nhà ông ta xem thử tình hình.`,
+        storytellerSystemInstruction: `${baseStorytellerSystemInstruction}\nVăn phong của bạn phải gai góc, trần trụi và thực tế như Nam Cao.`,
+        characterSystemInstruction: `${baseCharacterSystemInstruction}\nCác nhân vật như bá Kiến thì gian xảo, Lý Cường thì hống hách, Thị Nở thì ngây ngô nhưng có phần nhân hậu.`,
+        worldSystemInstruction: baseWorldSystemInstruction,
+    },
+    {
+        id: 'truyen-kieu',
+        title: 'Truyện Kiều',
+        author: 'Nguyễn Du',
+        description: 'Trải qua 15 năm lưu lạc đầy đoạn trường của Thúy Kiều. Mỗi lựa chọn của bạn có thể dẫn đến một kết cục khác, một con đường khác cho người con gái tài hoa bạc mệnh.',
+        originalCharacterName: 'Thúy Kiều',
+        originalCharacterGender: 'Nữ',
+        originalCharacterDescription: 'Vào vai Thúy Kiều, đối mặt với những biến cố nghiệt ngã của số phận, từ việc bán mình chuộc cha đến những ngày tháng đau khổ ở lầu xanh.',
+        fanficDescription: 'Tạo một nhân vật mới trong thế giới của Truyện Kiều. Bạn có thể là một vị anh hùng, một kẻ qua đường, hay một người bạn sẽ sát cánh cùng Kiều?',
+        initialPromptOriginal: 'Tôi là Thúy Kiều, vì gia đình gặp biến cố, tôi quyết định bán mình chuộc cha, bắt đầu chuỗi ngày lưu lạc. Mã Giám Sinh đến hỏi mua tôi.',
+        getFanficInitialPrompt: (c) => `Tôi là ${c.name}, một lãng khách đến thành Lâm Truy. Nghe đồn về vẻ đẹp và tài năng của Thúy Kiều, tôi tìm đến nhà nàng.`,
+        storytellerSystemInstruction: `${baseStorytellerSystemInstruction}\nVăn phong của bạn phải là thơ lục bát hoặc văn xuôi cổ trang, hoa mỹ, đầy điển tích như Nguyễn Du.`,
+        characterSystemInstruction: `${baseCharacterSystemInstruction}\nCác nhân vật như Tú Bà thì xảo quyệt, Sở Khanh thì lừa lọc, Thúc Sinh thì yếu đuối, Từ Hải thì anh hùng.`,
+        worldSystemInstruction: baseWorldSystemInstruction,
+    }
 ];
 
 export const createCustomLiteraryWork = (title: string, author: string, content: string): Work => {
-    const customStorytellerInstruction = `${storytellerBaseInstruction}\nToàn bộ bối cảnh, nhân vật, và không khí của game được xây dựng dựa trên một văn bản do người dùng cung cấp. Cố gắng tái hiện văn phong từ văn bản gốc.\n\nVăn bản gốc:\n---\n${content}\n---`;
-    const customCharacterInstruction = `${characterActorBaseInstruction}\nHãy nhập vai các nhân vật phù hợp với thế giới được mô tả trong văn bản gốc.`;
-    const customWorldInstruction = `${worldSmithBaseInstruction}\nHãy quản lý thế giới dựa trên các quy tắc và logic từ văn bản gốc.`;
-
     return {
         id: `custom-${Date.now()}`,
-        title: title || "Thế giới Tùy chỉnh",
-        author: author || "Người chơi",
-        description: `Một thế giới độc đáo được tạo ra dựa trên nội dung bạn cung cấp.`,
-        originalCharacterName: '', 
-        originalCharacterDescription: '', 
-        fanficDescription: 'Tạo một nhân vật để khám phá thế giới bạn vừa tạo ra.',
-        initialPromptOriginal: '', 
+        title: title || 'Thế giới Tùy chỉnh',
+        author: author || 'Người chơi',
         content: content,
-        getFanficInitialPrompt: (character: CharacterData) => {
-            return `Bắt đầu một câu chuyện trong một thế giới tùy chỉnh do người dùng định nghĩa.
-
-Bối cảnh thế giới (dựa trên nội dung người dùng cung cấp):
----
-${content}
----
-
-Thông tin về nhân vật của người chơi (một nhân vật mới):
-- Tên: ${character.name}
-- Ngoại hình: ${character.appearance}
-- Tính cách: ${character.personality}
-- Hoàn cảnh: ${character.background}
-
-Nhiệm vụ của bạn:
-1. Dựa vào thông tin trên, hãy viết một đoạn văn mở đầu hấp dẫn, giới thiệu nhân vật mới này vào bối cảnh thế giới đã cho. Hãy cố gắng nắm bắt và tái hiện văn phong, không khí từ nội dung gốc mà người dùng đã cung cấp.
-2. Tạo ra một tình huống khởi đầu thú vị, phù hợp với thế giới đó.`;
-        },
-        storytellerSystemInstruction: customStorytellerInstruction,
-        characterSystemInstruction: customCharacterInstruction,
-        worldSystemInstruction: customWorldInstruction,
+        description: 'Một thế giới được tạo ra từ chính ý tưởng của bạn.',
+        originalCharacterName: '', // No original character for custom worlds
+        originalCharacterDescription: '',
+        fanficDescription: 'Tạo một nhân vật để khám phá thế giới bạn vừa tạo ra.',
+        initialPromptOriginal: '',
+        getFanficInitialPrompt: (c) => `Tôi là ${c.name}. Bối cảnh của tôi là: ${c.background}. Tôi bắt đầu câu chuyện của mình.`,
+        storytellerSystemInstruction: `${baseStorytellerSystemInstruction}\nDựa vào nội dung sau để xác định văn phong và bối cảnh: ${content}`,
+        characterSystemInstruction: `${baseCharacterSystemInstruction}\nHãy suy luận tính cách nhân vật từ nội dung sau: ${content}`,
+        worldSystemInstruction: `${baseWorldSystemInstruction}\nHãy suy luận các quy tắc và nhân vật từ nội dung sau: ${content}`,
     };
 };
-
-export const getSystemInstructionWithContext = addContextToSystemInstruction;

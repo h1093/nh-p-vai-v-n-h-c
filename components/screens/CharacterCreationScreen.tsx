@@ -10,7 +10,7 @@ interface CharacterCreationScreenProps {
 }
 
 const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDeleteCharacter }: CharacterCreationScreenProps) => {
-    const [character, setCharacter] = useState<CharacterData>({ name: '', appearance: '', personality: '', background: '' });
+    const [character, setCharacter] = useState<CharacterData>({ name: '', gender: 'Nam', appearance: '', personality: '', background: '' });
     const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
     const [customTraits, setCustomTraits] = useState('');
     const [shouldSaveCharacter, setShouldSaveCharacter] = useState(true);
@@ -33,7 +33,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
         setSelectedSavedCharId(charId);
         const savedChar = savedCharacters.find(c => c.id === charId);
         if (savedChar) {
-            setCharacter(savedChar);
+            setCharacter({ ...savedChar, gender: savedChar.gender || 'Nam' });
             // Sync traits UI with loaded character
             const allTraits = savedChar.personality.split(',').map(t => t.trim()).filter(Boolean);
             const knownTraits = allTraits.filter(t => personalityTraits.includes(t));
@@ -42,7 +42,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
             setCustomTraits(newCustomTraits.join(', '));
         } else {
             // Reset if "new character" is selected
-            setCharacter({ name: '', appearance: '', personality: '', background: '' });
+            setCharacter({ name: '', gender: 'Nam', appearance: '', personality: '', background: '' });
             setSelectedTraits([]);
             setCustomTraits('');
         }
@@ -67,6 +67,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
 
     const isFormValid = useMemo(() => (
         character.name.trim() !== '' &&
+        character.gender.trim() !== '' &&
         character.appearance.trim() !== '' &&
         character.personality.trim() !== '' &&
         character.background.trim() !== ''
@@ -117,6 +118,24 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
                      <div>
                         <label htmlFor="name" className="block text-sm font-bold text-gray-300 mb-2">Tên nhân vật</label>
                         <input type="text" id="name" name="name" value={character.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Anh Ba Gánh Nước" required />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-bold text-gray-300 mb-2">Giới tính</label>
+                        <div className="flex space-x-4">
+                            {['Nam', 'Nữ', 'Khác'].map(g => (
+                                <label key={g} className="flex items-center space-x-2 cursor-pointer text-gray-300">
+                                    <input
+                                        type="radio"
+                                        name="gender"
+                                        value={g}
+                                        checked={character.gender === g}
+                                        onChange={handleChange}
+                                        className="h-4 w-4 text-amber-600 focus:ring-amber-500 border-gray-500 bg-gray-700"
+                                    />
+                                    <span>{g}</span>
+                                </label>
+                            ))}
+                        </div>
                     </div>
                     <div>
                         <label htmlFor="appearance" className="block text-sm font-bold text-gray-300 mb-2">Ngoại hình</label>

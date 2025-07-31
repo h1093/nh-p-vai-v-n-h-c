@@ -21,6 +21,7 @@ export type AITypeKey = keyof typeof AIType;
 // Dữ liệu nhân vật, không đổi
 export interface CharacterData {
     name: string;
+    gender: string;
     appearance: string;
     personality: string;
     background: string;
@@ -38,6 +39,7 @@ export interface Work {
     author: string;
     description: string;
     originalCharacterName: string;
+    originalCharacterGender?: 'Nam' | 'Nữ' | 'Khác';
     originalCharacterDescription: string;
     fanficDescription: string;
     initialPromptOriginal: string;
@@ -109,6 +111,7 @@ export interface GameState {
     companions: string[];
     dating: string | null;
     spouse: string | null;
+    pregnancy: { partnerName: string; conceptionTime: number; } | null;
     gameTime: number;
     offScreenWorldUpdate: string | null;
     lastTurnInfo: LastTurnInfo | null;

@@ -26,6 +26,7 @@ interface GameScreenProps {
   gameTime: number;
   dating: string | null;
   spouse: string | null;
+  pregnancy: { partnerName: string; conceptionTime: number; } | null;
   onConfess: (npcName: string) => void;
   onPropose: (npcName: string) => void;
   onChat: (npcName: string) => void;
@@ -37,7 +38,7 @@ const GameScreen = (props: GameScreenProps) => {
   const { 
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
-      companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, onConfess, onPropose,
+      companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
       onChat, onGiveGift, suggestedActions
   } = props;
 
@@ -129,6 +130,16 @@ const GameScreen = (props: GameScreenProps) => {
                 </svg>
                 <span className="text-sm font-semibold tracking-wider font-mono">{formatGameTime(gameTime)}</span>
             </div>
+            {pregnancy && (
+                <div className="flex items-center gap-1 text-pink-300 animate-fade-in" title={`Mang thai với ${pregnancy.partnerName}`}>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                    </svg>
+                    <span className="text-sm font-semibold tracking-wider font-mono">
+                        {`Tuần ${Math.max(1, Math.floor((gameTime - pregnancy.conceptionTime) / (7 * 24 * 60)))}`}
+                    </span>
+                </div>
+            )}
             <h1 className="text-lg md:text-xl font-serif-display text-gray-100 font-bold truncate hidden md:block" title={workTitle}>{workTitle}</h1>
         </div>
         <div className="flex-shrink-0 flex items-center gap-1 md:gap-2">

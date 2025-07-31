@@ -32,6 +32,7 @@ const App = () => {
     companions,
     dating,
     spouse,
+    pregnancy,
     gameTime,
     isLorebookOpen,
     isChangelogOpen,
@@ -140,6 +141,7 @@ const App = () => {
             gameTime={gameTime}
             dating={dating}
             spouse={spouse}
+            pregnancy={pregnancy}
             onConfess={handleConfess}
             onPropose={handlePropose}
             onChat={handleChatWithCompanion}
