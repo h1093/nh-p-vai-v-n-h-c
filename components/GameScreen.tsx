@@ -52,6 +52,7 @@ const GameScreen = (props: GameScreenProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const [activePanel, setActivePanel] = useState<'affinity' | 'inventory' | 'companions' | null>(null);
+  const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
 
   const lastModelMessage = history.slice().reverse().find(m => m.role === 'model');
 
@@ -277,21 +278,40 @@ const GameScreen = (props: GameScreenProps) => {
         onDismiss={onDismissSuggestedLoreEntry}
       />
       {!loading && !editingMessage && suggestedActions.length > 0 && (
-          <div className="mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-700 pb-4 animate-fade-in">
-              <p className="text-sm font-semibold text-gray-400 mr-2 self-center">Gợi ý:</p>
-              {suggestedActions.map((action, index) => (
-                  <ChoiceButton
-                      key={index}
-                      onClick={() => handleSuggestionClick(action)}
-                      size="sm"
-                      variant="secondary"
-                      className="!bg-gray-700 !text-gray-300 hover:!bg-gray-600"
-                  >
-                      {action}
-                  </ChoiceButton>
-              ))}
-          </div>
-        )}
+        <div className="mb-4 border-b border-gray-700 pb-4 animate-fade-in">
+            <div className="flex justify-center items-center mb-3 relative">
+              <p className="text-sm font-semibold text-gray-400">Gợi ý hành động:</p>
+              <button 
+                  onClick={() => setIsSuggestionsVisible(!isSuggestionsVisible)} 
+                  className="absolute right-0 text-gray-500 hover:text-white p-1 rounded-full hover:bg-gray-700 transition-colors"
+                  title={isSuggestionsVisible ? "Ẩn gợi ý" : "Hiện gợi ý"}
+              >
+                  {isSuggestionsVisible ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                    </svg>
+                  )}
+              </button>
+            </div>
+            {isSuggestionsVisible && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {suggestedActions.map((action, index) => (
+                      <button
+                          key={index}
+                          onClick={() => handleSuggestionClick(action)}
+                          className="w-full text-left p-3 text-sm rounded-lg bg-gray-700 hover:bg-gray-600/80 text-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-amber-500 shadow-md"
+                      >
+                          {action}
+                      </button>
+                  ))}
+              </div>
+            )}
+        </div>
+      )}
         <div className="flex items-center gap-2">
             <button
                 onClick={onRegenerate}
