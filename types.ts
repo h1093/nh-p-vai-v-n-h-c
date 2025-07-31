@@ -64,6 +64,12 @@ export interface LorebookEntry {
     value: string;
 }
 
+export interface LorebookSuggestion {
+    id: string;
+    key: string;
+    value: string;
+}
+
 export interface AffinityUpdate {
     npcName: string;
     change: number;
@@ -117,6 +123,7 @@ export interface GameState {
     lastTurnInfo: LastTurnInfo | null;
     isNsfwEnabled: boolean;
     suggestedActions: string[];
+    lorebookSuggestions: LorebookSuggestion[];
     // Dữ liệu về tác phẩm được lưu dưới dạng có thể tuần tự hóa
     selectedWorkId: string;
     customWorkData?: {

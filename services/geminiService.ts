@@ -107,6 +107,71 @@ const characterSchema = {
     required: ["dialogue"]
 };
 
+const entityExtractionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        entities: {
+            type: Type.ARRAY,
+            description: "Danh sách các thực thể được trích xuất.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    key: {
+                        type: Type.STRING,
+                        description: "Tên của thực thể (nhân vật, địa điểm, vật phẩm, v.v.)."
+                    },
+                    value: {
+                        type: Type.STRING,
+                        description: "Một mô tả ngắn gọn, một câu về thực thể dựa trên văn bản."
+                    }
+                },
+                required: ["key", "value"]
+            }
+        }
+    },
+    required: ["entities"]
+};
+
+export async function extractEntitiesFromText(
+    ai: GoogleGenAI,
+    narrativeText: string,
+    existingLore: LorebookEntry[],
+    character: CharacterData
+): Promise<Array<{key: string, value: string}>> {
+    const systemInstruction = `Bạn là một trợ lý AI cho một game nhập vai dựa trên văn bản. Nhiệm vụ của bạn là đọc một đoạn tường thuật và trích xuất các thực thể quan trọng, MỚI (nhân vật, địa điểm, vật phẩm, khái niệm) để đề xuất cho Sổ tay của trò chơi.
+
+QUY TẮC:
+1. Phân tích văn bản được cung cấp.
+2. Xác định các mục tiềm năng cho Sổ tay. Đây là những thực thể được đặt tên và có ý nghĩa đối với câu chuyện.
+3. So sánh các thực thể này với danh sách 'Khóa Sổ tay hiện có' và 'Tên nhân vật người chơi'.
+4. **QUAN TRỌNG: Chỉ trích xuất các thực thể KHÔNG có trong danh sách 'Khóa Sổ tay hiện có' và KHÔNG phải là 'Tên nhân vật người chơi'.**
+5. Cung cấp một mô tả ngắn gọn, một câu cho mỗi thực thể mới CHỈ dựa trên thông tin trong văn bản được cung cấp.
+6. Trả về kết quả ở định dạng JSON được chỉ định.
+7. Nếu không tìm thấy thực thể mới, độc nhất nào, hãy trả về một danh sách 'entities' rỗng.
+
+Tên nhân vật người chơi: "${character.name}"
+Các khóa Sổ tay hiện có: [${existingLore.map(e => `"${e.key}"`).join(', ')}]
+`;
+
+    const response = await withRetry(() => ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: `Đây là đoạn văn tường thuật:\n\n---\n\n${narrativeText}`,
+        config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: entityExtractionSchema
+        }
+    }));
+
+    try {
+        const result = JSON.parse(response.text.trim());
+        return result.entities || [];
+    } catch (e) {
+        console.error("Lỗi phân tích phản hồi trích xuất thực thể:", response.text, e);
+        return [];
+    }
+}
+
 export async function generateStorySegment(
     ai: GoogleGenAI,
     prompt: string,

@@ -37,6 +37,7 @@ const App = () => {
     isLorebookOpen,
     isChangelogOpen,
     suggestedActions,
+    lorebookSuggestions,
     savedGames,
     savedCharacters,
     setIsLorebookOpen,
@@ -65,6 +66,8 @@ const App = () => {
     handleAddLoreEntry,
     handleUpdateLoreEntry,
     handleDeleteLoreEntry,
+    handleAddSuggestedLoreEntry,
+    handleDismissSuggestedLoreEntry,
     handleLoadGame,
     handleDeleteGame,
     handleDeleteCharacter,
@@ -147,6 +150,9 @@ const App = () => {
             onChat={handleChatWithCompanion}
             onGiveGift={handleGiveGiftToCompanion}
             suggestedActions={suggestedActions}
+            lorebookSuggestions={lorebookSuggestions}
+            onAddSuggestedLoreEntry={handleAddSuggestedLoreEntry}
+            onDismissSuggestedLoreEntry={handleDismissSuggestedLoreEntry}
           />
         );
       case GameStatus.Error:

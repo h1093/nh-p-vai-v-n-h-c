@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey } from '../types';
+import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LorebookSuggestion } from '../types';
 import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
 import ChoiceButton from './ChoiceButton';
+import LorebookSuggestions from './LorebookSuggestions';
 
 interface GameScreenProps {
   history: HistoryMessage[];
@@ -32,6 +33,9 @@ interface GameScreenProps {
   onChat: (npcName: string) => void;
   onGiveGift: (npcName: string, item: Item) => void;
   suggestedActions: string[];
+  lorebookSuggestions: LorebookSuggestion[];
+  onAddSuggestedLoreEntry: (suggestion: LorebookSuggestion) => void;
+  onDismissSuggestedLoreEntry: (id: string) => void;
 }
 
 const GameScreen = (props: GameScreenProps) => {
@@ -39,7 +43,7 @@ const GameScreen = (props: GameScreenProps) => {
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
-      onChat, onGiveGift, suggestedActions
+      onChat, onGiveGift, suggestedActions, lorebookSuggestions, onAddSuggestedLoreEntry, onDismissSuggestedLoreEntry
   } = props;
 
   const [input, setInput] = useState('');
@@ -267,6 +271,11 @@ const GameScreen = (props: GameScreenProps) => {
     </div>
 
     <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 rounded-b-xl">
+      <LorebookSuggestions
+        suggestions={lorebookSuggestions}
+        onAdd={onAddSuggestedLoreEntry}
+        onDismiss={onDismissSuggestedLoreEntry}
+      />
       {!loading && !editingMessage && suggestedActions.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-700 pb-4 animate-fade-in">
               <p className="text-sm font-semibold text-gray-400 mr-2 self-center">Gợi ý:</p>
