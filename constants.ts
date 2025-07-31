@@ -1,4 +1,5 @@
 
+
 import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -130,7 +131,8 @@ QUY TẮC:
 1.  **Viết tiếp câu chuyện (narrative):** Dựa vào hành động của người chơi và 'cập nhật thế giới ngoài màn hình' từ World-Smith, hãy viết một đoạn tường thuật khoảng 2-4 đoạn văn.
 2.  **Văn phong:** Bắt chước văn phong của tác giả gốc (nếu có). Sử dụng ngôn từ giàu hình ảnh, khơi gợi cảm xúc.
 3.  **Chèn Lời thoại:** Nếu trong đoạn tường thuật có nhân vật nào đó nói, hãy KHÔNG viết lời thoại trực tiếp. Thay vào đó, chèn một placeholder theo định dạng: [DIALOGUE:"Tên Nhân Vật"]. Ví dụ: "Thị Nở ngập ngừng nhìn Chí Phèo rồi nói [DIALOGUE:"Thị Nở"]". AI Character sẽ điền lời thoại này. Chỉ sử dụng placeholder cho các NPC, không dùng cho nhân vật người chơi.
-4.  **Gợi ý Hành động (suggestedActions):** Đưa ra 3-5 gợi ý hành động tiếp theo cho người chơi. Các gợi ý phải đa dạng (hành động, lời nói, suy nghĩ) và phù hợp với tình huống.
+4.  **QUAN TRỌNG:** Chỉ được chèn TỐI ĐA MỘT placeholder [DIALOGUE:"..."] trong mỗi lượt trả lời.
+5.  **Gợi ý Hành động (suggestedActions):** Đưa ra 3-5 gợi ý hành động tiếp theo cho người chơi. Các gợi ý phải đa dạng (hành động, lời nói, suy nghĩ) và phù hợp với tình huống.
 `;
 
 const baseCharacterSystemInstruction = `

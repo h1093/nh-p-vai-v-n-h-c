@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Work, CharacterData, Character } from '../../types';
+import { Work, Character, CharacterData } from '../../types';
 
 interface CharacterCreationScreenProps {
     work: Work;
-    onSubmit: (character: CharacterData, shouldSave: boolean) => void;
+    onSubmit: (character: Partial<Character>, shouldSave: boolean) => void;
     onBack: () => void;
     savedCharacters: Character[];
     onDeleteCharacter: (id: string) => void;
 }
 
 const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDeleteCharacter }: CharacterCreationScreenProps) => {
-    const [character, setCharacter] = useState<CharacterData>({ name: '', gender: 'Nam', appearance: '', personality: '', background: '' });
+    const [character, setCharacter] = useState<Partial<Character>>({ name: '', gender: 'Nam', appearance: '', personality: '', background: '' });
     const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
     const [customTraits, setCustomTraits] = useState('');
     const [shouldSaveCharacter, setShouldSaveCharacter] = useState(true);
@@ -33,9 +33,9 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
         setSelectedSavedCharId(charId);
         const savedChar = savedCharacters.find(c => c.id === charId);
         if (savedChar) {
-            setCharacter({ ...savedChar, gender: savedChar.gender || 'Nam' });
+            setCharacter(savedChar); // Now this includes the ID
             // Sync traits UI with loaded character
-            const allTraits = savedChar.personality.split(',').map(t => t.trim()).filter(Boolean);
+            const allTraits = (savedChar.personality || '').split(',').map(t => t.trim()).filter(Boolean);
             const knownTraits = allTraits.filter(t => personalityTraits.includes(t));
             const newCustomTraits = allTraits.filter(t => !personalityTraits.includes(t));
             setSelectedTraits(knownTraits);
@@ -66,11 +66,11 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
     };
 
     const isFormValid = useMemo(() => (
-        character.name.trim() !== '' &&
-        character.gender.trim() !== '' &&
-        character.appearance.trim() !== '' &&
-        character.personality.trim() !== '' &&
-        character.background.trim() !== ''
+        character.name && character.name.trim() !== '' &&
+        character.gender && character.gender.trim() !== '' &&
+        character.appearance && character.appearance.trim() !== '' &&
+        character.personality && character.personality.trim() !== '' &&
+        character.background && character.background.trim() !== ''
     ), [character]);
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -117,7 +117,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
                 <div className="border-t border-gray-700 pt-6 space-y-6">
                      <div>
                         <label htmlFor="name" className="block text-sm font-bold text-gray-300 mb-2">Tên nhân vật</label>
-                        <input type="text" id="name" name="name" value={character.name} onChange={handleChange} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Anh Ba Gánh Nước" required />
+                        <input type="text" id="name" name="name" value={character.name || ''} onChange={handleChange} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Anh Ba Gánh Nước" required />
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-300 mb-2">Giới tính</label>
@@ -139,7 +139,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
                     </div>
                     <div>
                         <label htmlFor="appearance" className="block text-sm font-bold text-gray-300 mb-2">Ngoại hình</label>
-                        <textarea id="appearance" name="appearance" value={character.appearance} onChange={handleChange} rows={3} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Thân hình gầy gò, nước da ngăm đen..." required />
+                        <textarea id="appearance" name="appearance" value={character.appearance || ''} onChange={handleChange} rows={3} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Thân hình gầy gò, nước da ngăm đen..." required />
                     </div>
                     <div>
                         <label className="block text-sm font-bold text-gray-300 mb-2">Tính cách</label>
@@ -169,7 +169,7 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
                     </div>
                     <div>
                         <label htmlFor="background" className="block text-sm font-bold text-gray-300 mb-2">Hoàn cảnh</label>
-                        <textarea id="background" name="background" value={character.background} onChange={handleChange} rows={4} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Một thầy lang trẻ từ nơi khác đến..." required />
+                        <textarea id="background" name="background" value={character.background || ''} onChange={handleChange} rows={4} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Một thầy lang trẻ từ nơi khác đến..." required />
                     </div>
                 </div>
                 

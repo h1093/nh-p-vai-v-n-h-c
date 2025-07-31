@@ -14,7 +14,7 @@ interface GameScreenProps {
   onSaveAndExit: () => void;
   onOpenLorebook: () => void;
   workTitle: string;
-  onUpdateLastNarrative: (newContent: string) => void;
+  onUpdateLastNarrative: (messageId: string, newContent: string) => void;
   onRegenerate: () => void;
   canRegenerate: boolean;
   affinity: AffinityData;
@@ -69,6 +69,21 @@ const GameScreen = (props: GameScreenProps) => {
     return `Ngày ${days}, ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
   };
 
+  const formatPregnancyTime = (startTime: number, currentTime: number): string => {
+      const totalMinutes = currentTime - startTime;
+      const totalWeeks = Math.max(1, Math.floor(totalMinutes / (7 * 24 * 60)));
+      const months = Math.floor(totalWeeks / 4);
+      const remainingWeeks = totalWeeks % 4;
+      
+      if (months > 0) {
+          if (remainingWeeks > 0) {
+              return `Tháng ${months}, Tuần ${remainingWeeks}`;
+          }
+          return `Tháng ${months}`;
+      }
+      return `Tuần ${totalWeeks}`;
+  };
+
   useEffect(scrollToBottom, [history, loading]);
   useEffect(autoGrowTextarea, [input]);
 
@@ -80,15 +95,15 @@ const GameScreen = (props: GameScreenProps) => {
     }
   };
   
-  const handleEditClick = () => {
-    if (lastModelMessage && !loading) {
-      setEditingMessage({ id: lastModelMessage.id, content: lastModelMessage.content });
+  const handleEditClick = (messageToEdit: HistoryMessage) => {
+    if (!loading) {
+      setEditingMessage({ id: messageToEdit.id, content: messageToEdit.content });
     }
   };
 
   const handleSaveEdit = () => {
     if (editingMessage) {
-      onUpdateLastNarrative(editingMessage.content);
+      onUpdateLastNarrative(editingMessage.id, editingMessage.content);
       setEditingMessage(null);
     }
   };
@@ -136,7 +151,7 @@ const GameScreen = (props: GameScreenProps) => {
                         <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
                     </svg>
                     <span className="text-sm font-semibold tracking-wider font-mono">
-                        {`Tuần ${Math.max(1, Math.floor((gameTime - pregnancy.conceptionTime) / (7 * 24 * 60)))}`}
+                        {formatPregnancyTime(pregnancy.conceptionTime, gameTime)}
                     </span>
                 </div>
             )}
@@ -194,17 +209,18 @@ const GameScreen = (props: GameScreenProps) => {
         </div>
     )}
     <div className="flex-grow p-4 md:p-6 overflow-y-auto bg-gray-900 space-y-6">
-        {history.map(msg => {
+        {history.map((msg, index) => {
             const isModel = msg.role === 'model';
             const isUser = msg.role === 'user';
             const isBeingEdited = editingMessage?.id === msg.id;
             const isDialogue = isModel && msg.speaker !== 'Người dẫn chuyện';
+            const isLastModelMessage = isModel && index === history.length - 1;
 
             return (
                 <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-xl w-full flex ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-2 group`}>
-                         {isModel && (
-                           <button onClick={handleEditClick} disabled={loading || !!editingMessage} title="Chỉnh sửa" className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-white disabled:opacity-0 mb-1 self-start mt-2">
+                         {isLastModelMessage && (
+                           <button onClick={() => handleEditClick(msg)} disabled={loading || !!editingMessage} title="Chỉnh sửa" className="opacity-0 group-hover:opacity-100 transition-opacity p-1 text-gray-400 hover:text-white disabled:opacity-0 mb-1 self-start mt-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
                                     <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fillRule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clipRule="evenodd" />
                                 </svg>

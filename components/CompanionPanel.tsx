@@ -44,7 +44,7 @@ const CompanionPanel = ({ companions, affinityData, inventory, dating, spouse, o
                 const percentage = ((score + 100) / 200) * 100;
                 const isSpouse = spouse === name;
                 const isDating = dating === name;
-                const canConfess = !isSpouse && !isDating && !dating && !spouse && score > 70;
+                const canConfess = !dating && !spouse && score > 70;
                 const canPropose = isDating && score > 90 && hasGrassRing;
 
                 return (

@@ -134,7 +134,14 @@ export async function generateStorySegment(
         contents: turnSummary,
         config: { systemInstruction: worldSystemInstruction, responseMimeType: "application/json", responseSchema: worldSchema }
     }));
-    const worldJson = JSON.parse(worldResponse.text.trim());
+    
+    let worldJson;
+    try {
+        worldJson = JSON.parse(worldResponse.text.trim());
+    } catch (e: any) {
+        console.error("Lỗi phân tích JSON từ World-Smith:", worldResponse.text);
+        throw new Error(`Lỗi phân tích JSON từ AI Quản lý Thế giới: ${e.message}`);
+    }
     
     // 2. Storyteller AI
     setActiveAI('Storyteller');
@@ -145,7 +152,15 @@ export async function generateStorySegment(
         contents: storytellerPrompt,
         config: { systemInstruction: storytellerSystemInstruction, responseMimeType: "application/json", responseSchema: storytellerSchema }
     }));
-    const storytellerJson = JSON.parse(storytellerResponse.text.trim());
+
+    let storytellerJson;
+    try {
+        storytellerJson = JSON.parse(storytellerResponse.text.trim());
+    } catch (e: any) {
+        console.error("Lỗi phân tích JSON từ Storyteller:", storytellerResponse.text);
+        throw new Error(`Lỗi phân tích JSON từ AI Kể chuyện: ${e.message}`);
+    }
+
     let narrative = storytellerJson.narrative;
     const suggestedActions = storytellerJson.suggestedActions;
 
@@ -171,7 +186,15 @@ export async function generateStorySegment(
                     contents: characterPrompt,
                     config: { systemInstruction: characterSystemInstruction, responseMimeType: "application/json", responseSchema: characterSchema }
                 }));
-                const characterJson = JSON.parse(characterResponse.text.trim());
+                
+                let characterJson;
+                try {
+                    characterJson = JSON.parse(characterResponse.text.trim());
+                } catch (e: any) {
+                    console.error(`Lỗi phân tích JSON từ Character AI cho nhân vật ${npcName}:`, characterResponse.text);
+                    throw new Error(`Lỗi phân tích JSON từ AI Tương tác Nhân vật (${npcName}): ${e.message}`);
+                }
+                
                 narrative = narrative.replace(placeholder, characterJson.dialogue);
             }
         }

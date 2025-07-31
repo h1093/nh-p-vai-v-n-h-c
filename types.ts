@@ -116,6 +116,7 @@ export interface GameState {
     offScreenWorldUpdate: string | null;
     lastTurnInfo: LastTurnInfo | null;
     isNsfwEnabled: boolean;
+    suggestedActions: string[];
     // Dữ liệu về tác phẩm được lưu dưới dạng có thể tuần tự hóa
     selectedWorkId: string;
     customWorkData?: {

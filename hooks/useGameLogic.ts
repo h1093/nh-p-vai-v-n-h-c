@@ -1,3 +1,5 @@
+
+
 import { useState, useCallback, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -127,7 +129,7 @@ export const useGameLogic = () => {
     }, []);
     
     const processStoryResult = useCallback((result: StorySegmentResult) => {
-        const { narrative, speaker, aiType, worldStateChanges, suggestedActions } = result;
+        const { narrative, speaker, aiType, worldStateChanges, suggestedActions: newSuggestedActions } = result;
 
         const newModelMessage: HistoryMessage = {
             role: 'model', content: narrative, id: `model-${Date.now()}`, speaker: speaker, aiType: aiType,
@@ -169,7 +171,7 @@ export const useGameLogic = () => {
 
         setOffScreenWorldUpdate(offScreenWorldUpdate);
         setGameTime(prev => prev + (timePassed || 15));
-        setSuggestedActions(suggestedActions || []);
+        setSuggestedActions(newSuggestedActions || []);
     }, [pregnancy, gameTime]);
 
     // --- API CALLS ---
@@ -276,16 +278,33 @@ export const useGameLogic = () => {
         }
     }, [selectedWork, startStory]);
 
-    const handleStartFanfic = useCallback((charData: CharacterData, shouldSaveChar: boolean) => {
-        if (selectedWork) {
+    const handleStartFanfic = useCallback((charData: Partial<Character>, shouldSaveChar: boolean) => {
+        if (selectedWork && charData.name && charData.gender && charData.appearance && charData.personality && charData.background) {
             if (shouldSaveChar) {
-                const newChar: Character = { ...charData, id: `char-${Date.now()}`};
-                setSavedCharacters(prev => [...prev.filter(c => c.name !== newChar.name), newChar]);
+                // If character has an ID, it's an update.
+                if (charData.id) {
+                    setSavedCharacters(prev => prev.map(c => c.id === charData.id ? charData as Character : c));
+                } else { // No ID, it's a new character.
+                    const newChar: Character = {
+                        ...charData,
+                        id: `char-${Date.now()}`
+                    } as Character;
+                    setSavedCharacters(prev => [...prev.filter(c => c.name !== newChar.name), newChar]);
+                }
             }
-            setCharacter(charData);
+            
+            const storyCharacter: CharacterData = {
+                name: charData.name,
+                gender: charData.gender,
+                appearance: charData.appearance,
+                personality: charData.personality,
+                background: charData.background,
+            };
+
+            setCharacter(storyCharacter);
             setActiveSaveId(`game-${Date.now()}`);
-            const prompt = selectedWork.getFanficInitialPrompt(charData);
-            startStory(prompt, charData);
+            const prompt = selectedWork.getFanficInitialPrompt(storyCharacter);
+            startStory(prompt, storyCharacter);
         }
     }, [selectedWork, startStory]);
     
@@ -308,6 +327,7 @@ export const useGameLogic = () => {
         const currentGameState: GameState = {
             id: activeSaveId, character, history, lorebook, affinity, inventory, equipment,
             companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled,
+            suggestedActions,
             selectedWorkId: selectedWork.id,
             customWorkData: selectedWork.id.startsWith('custom-') ? {
                 title: selectedWork.title, author: selectedWork.author, content: selectedWork.content || ''
@@ -334,7 +354,7 @@ export const useGameLogic = () => {
         });
         
         resetToWorkSelection();
-    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, resetToWorkSelection]);
+    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, suggestedActions, resetToWorkSelection]);
 
     const handleLoadGame = useCallback((saveId: string) => {
         const slot = savedGames.find(s => s.id === saveId);
@@ -370,7 +390,7 @@ export const useGameLogic = () => {
         setLastTurnInfo(gameState.lastTurnInfo);
         setIsNsfwEnabled(gameState.isNsfwEnabled);
         setActiveSaveId(gameState.id);
-        setSuggestedActions(gameState.history[gameState.history.length-1]?.role === 'model' ? [] : []); // Re-calculate suggestions if needed
+        setSuggestedActions(gameState.suggestedActions || []);
         setStatus(GameStatus.Playing);
         
     }, [savedGames, resetFullGameState]);
@@ -399,17 +419,13 @@ export const useGameLogic = () => {
     const handleUpdateLoreEntry = useCallback((updatedEntry: LorebookEntry) => setLorebook(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e)), []);
     const handleDeleteLoreEntry = useCallback((id: string) => setLorebook(prev => prev.filter(e => e.id !== id)), []);
     
-    const handleUpdateLastNarrative = useCallback((newContent: string) => {
-        setHistory(prev => {
-            const newHistory = [...prev];
-            const lastMessageIndex = newHistory.findIndex(m => m.id === lastTurnInfo?.prompt); // Find the user prompt that led to this
-            if(newHistory.length > 0) {
-                 newHistory[newHistory.length - 1].content = newContent;
-                 return newHistory;
-            }
-            return prev;
-        });
-    }, [lastTurnInfo]);
+    const handleUpdateLastNarrative = useCallback((messageId: string, newContent: string) => {
+        setHistory(prev =>
+            prev.map(msg =>
+                msg.id === messageId ? { ...msg, content: newContent } : msg
+            )
+        );
+    }, []);
 
     const handleRegenerate = useCallback(async () => {
         if (!lastTurnInfo || isLoading) return;
