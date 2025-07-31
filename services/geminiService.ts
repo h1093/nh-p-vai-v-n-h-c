@@ -138,24 +138,40 @@ export async function extractEntitiesFromText(
     existingLore: LorebookEntry[],
     character: CharacterData
 ): Promise<Array<{key: string, value: string}>> {
-    const systemInstruction = `Bạn là một trợ lý AI cho một game nhập vai dựa trên văn bản. Nhiệm vụ của bạn là đọc một đoạn tường thuật và trích xuất các thực thể quan trọng, MỚI (nhân vật, địa điểm, vật phẩm, khái niệm) để đề xuất cho Sổ tay của trò chơi.
+    const systemInstruction = `Bạn là một trợ lý AI cho một game nhập vai dựa trên văn bản. Nhiệm vụ của bạn là đọc một đoạn tường thuật và trích xuất các thực thể quan trọng, MỚI (nhân vật, địa điểm, vật phẩm, khái niệm) để đề xuất cho Sổ tay (Lorebook) của trò chơi.
 
-QUY TẮC:
-1. Phân tích văn bản được cung cấp.
-2. Xác định các mục tiềm năng cho Sổ tay. Đây là những thực thể được đặt tên và có ý nghĩa đối với câu chuyện.
-3. So sánh các thực thể này với danh sách 'Khóa Sổ tay hiện có' và 'Tên nhân vật người chơi'.
-4. **QUAN TRỌNG: Chỉ trích xuất các thực thể KHÔNG có trong danh sách 'Khóa Sổ tay hiện có' và KHÔNG phải là 'Tên nhân vật người chơi'.**
-5. Cung cấp một mô tả ngắn gọn, một câu cho mỗi thực thể mới CHỈ dựa trên thông tin trong văn bản được cung cấp.
-6. Trả về kết quả ở định dạng JSON được chỉ định.
-7. Nếu không tìm thấy thực thể mới, độc nhất nào, hãy trả về một danh sách 'entities' rỗng.
+QUY TẮC CỐT LÕI:
+1.  **Chỉ trích xuất thực thể MỚI:** So sánh với 'Tên người chơi' và 'Các khóa Sổ tay đã có'. Bất kỳ thực thể nào đã tồn tại trong các danh sách đó phải được BỎ QUA.
+2.  **Một câu mô tả:** Cung cấp một mô tả ngắn gọn (một câu) cho mỗi thực thể, chỉ dựa trên thông tin trong đoạn văn.
+3.  **Định dạng JSON:** Luôn trả về kết quả dưới dạng JSON theo schema đã cho. Nếu không có thực thể mới nào, trả về một danh sách 'entities' rỗng.
 
-Tên nhân vật người chơi: "${character.name}"
-Các khóa Sổ tay hiện có: [${existingLore.map(e => `"${e.key}"`).join(', ')}]
+Tên người chơi (phải bỏ qua): "${character.name}"
+Các khóa Sổ tay đã có (phải bỏ qua): [${existingLore.map(e => `"${e.key}"`).join(', ')}]
+
+VÍ DỤ:
+-   **Đoạn văn:** "Chí Phèo bước vào quán rượu của bà Ba, một người đàn bà góa nổi tiếng khó tính. Hắn gọi một chai rượu và nhìn ra con đường làng quen thuộc."
+-   **Sổ tay đã có:** ["Chí Phèo", "con đường làng"]
+-   **Kết quả đúng:**
+    \`\`\`json
+    {
+      "entities": [
+        {
+          "key": "bà Ba",
+          "value": "Chủ quán rượu, là một người đàn bà góa nổi tiếng khó tính."
+        },
+        {
+          "key": "quán rượu của bà Ba",
+          "value": "Nơi Chí Phèo bước vào để gọi rượu."
+        }
+      ]
+    }
+    \`\`\`
+-   **Giải thích:** "Chí Phèo" và "con đường làng" bị bỏ qua vì đã có trong Sổ tay. "bà Ba" và "quán rượu của bà Ba" là mới và được trích xuất.
 `;
 
     const response = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
-        contents: `Đây là đoạn văn tường thuật:\n\n---\n\n${narrativeText}`,
+        contents: `Đây là đoạn văn tường thuật để phân tích:\n\n---\n${narrativeText}\n---`,
         config: {
             systemInstruction,
             responseMimeType: "application/json",

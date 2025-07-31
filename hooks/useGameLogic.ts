@@ -1,6 +1,7 @@
 
 
 
+
 import { useState, useCallback, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -136,22 +137,35 @@ export const useGameLogic = () => {
         try {
             const newEntities = await extractEntitiesFromText(ai, narrative, lorebook, character);
             
-            const existingLoreKeys = lorebook.map(e => e.key.toLowerCase().trim());
-            const currentSuggestionKeys = lorebookSuggestions.map(s => s.key.toLowerCase().trim());
+            const existingLoreKeys = new Set(lorebook.map(e => e.key.toLowerCase().trim()));
+            const currentSuggestionKeys = new Set(lorebookSuggestions.map(s => s.key.toLowerCase().trim()));
+            const playerCharacterName = character.name.toLowerCase().trim();
 
-            const trulyNewSuggestions = newEntities
-                .filter(entity => 
-                    entity.key && 
-                    !existingLoreKeys.includes(entity.key.toLowerCase().trim()) &&
-                    !currentSuggestionKeys.includes(entity.key.toLowerCase().trim())
-                )
-                .map(entity => ({
-                    ...entity,
-                    id: `suggestion-${Date.now()}-${Math.random()}`
-                }));
+            const uniqueNewSuggestions = new Map<string, {key: string, value: string}>();
 
-            if (trulyNewSuggestions.length > 0) {
-                setLorebookSuggestions(prev => [...prev, ...trulyNewSuggestions]);
+            for (const entity of newEntities) {
+                if (!entity || !entity.key) continue;
+                const keyLower = entity.key.toLowerCase().trim();
+
+                if (
+                    keyLower && // key is not empty
+                    !uniqueNewSuggestions.has(keyLower) && // not already added in this batch
+                    keyLower !== playerCharacterName && // not the player
+                    !existingLoreKeys.has(keyLower) && // not in the lorebook
+                    !currentSuggestionKeys.has(keyLower) // not already suggested
+                ) {
+                    uniqueNewSuggestions.set(keyLower, entity);
+                }
+            }
+            
+            const suggestionsToAdd = Array.from(uniqueNewSuggestions.values()).map(entity => ({
+                ...entity,
+                id: `suggestion-${Date.now()}-${Math.random()}`
+            }));
+
+
+            if (suggestionsToAdd.length > 0) {
+                setLorebookSuggestions(prev => [...prev, ...suggestionsToAdd]);
             }
         } catch (e) {
             console.error("Failed to extract lorebook suggestions:", e);
