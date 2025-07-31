@@ -1,42 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HistoryMessage, LorebookSuggestion, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey } from '../types';
+import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey } from '../types';
 import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
 import ChoiceButton from './ChoiceButton';
-
-const LorebookSuggestions = ({ suggestions, onAdd, onDismiss }: { suggestions: LorebookSuggestion[], onAdd: (suggestion: LorebookSuggestion) => void, onDismiss: () => void }) => {
-  if (suggestions.length === 0) return null;
-  
-  return (
-    <div className="animate-fade-in p-4 bg-amber-900/20 border-t border-b border-amber-800">
-      <div className="flex justify-between items-center mb-2">
-          <h4 className="text-sm font-bold text-amber-300 uppercase tracking-wider">Gợi ý cho Sổ tay</h4>
-          <button onClick={onDismiss} className="text-amber-400 hover:text-amber-200" title="Bỏ qua">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-          </button>
-      </div>
-      <ul className="space-y-2">
-        {suggestions.map(suggestion => (
-          <li key={suggestion.key} className="flex items-center justify-between text-sm bg-gray-800 p-2 rounded-md border border-amber-900/50">
-            <div>
-              <strong className="font-semibold text-gray-200">{suggestion.key}:</strong>
-              <span className="text-gray-400 ml-2">{suggestion.value}</span>
-            </div>
-            <button 
-              onClick={() => onAdd(suggestion)}
-              className="ml-4 flex-shrink-0 bg-amber-800 text-amber-200 hover:bg-amber-700 font-bold text-xs py-1 px-2 rounded-full transition-colors"
-              title="Thêm vào Sổ tay"
-            >
-              + Thêm
-            </button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-};
 
 interface GameScreenProps {
   history: HistoryMessage[];
@@ -49,9 +17,6 @@ interface GameScreenProps {
   onUpdateLastNarrative: (newContent: string) => void;
   onRegenerate: () => void;
   canRegenerate: boolean;
-  lorebookSuggestions: LorebookSuggestion[];
-  onAddSuggestion: (suggestion: LorebookSuggestion) => void;
-  onDismissSuggestions: () => void;
   affinity: AffinityData;
   inventory: Item[];
   equipment: Equipment;
@@ -71,8 +36,7 @@ interface GameScreenProps {
 const GameScreen = (props: GameScreenProps) => {
   const { 
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
-      onUpdateLastNarrative, onRegenerate, canRegenerate, lorebookSuggestions, 
-      onAddSuggestion, onDismissSuggestions, affinity, inventory, equipment,
+      onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, onConfess, onPropose,
       onChat, onGiveGift, suggestedActions
   } = props;
@@ -207,7 +171,7 @@ const GameScreen = (props: GameScreenProps) => {
              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                 <path fillRule="evenodd" d="M3 3a1 1 0 011 1v12a1 1 0 11-2 0V4a1 1 0 011-1zm7.707 3.293a1 1 0 010 1.414L9.414 9H17a1 1 0 110 2H9.414l1.293 1.293a1 1 0 01-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0z" clipRule="evenodd" />
             </svg>
-             <span className="hidden sm:inline">Thoát</span>
+             <span className="hidden sm:inline">Lưu & Thoát</span>
           </button>
         </div>
     </div>
@@ -275,12 +239,6 @@ const GameScreen = (props: GameScreenProps) => {
         <div ref={messagesEndRef} />
     </div>
 
-    <LorebookSuggestions 
-      suggestions={lorebookSuggestions}
-      onAdd={onAddSuggestion}
-      onDismiss={onDismissSuggestions}
-    />
-    
     <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 rounded-b-xl">
       {!loading && !editingMessage && suggestedActions.length > 0 && (
           <div className="mb-4 flex flex-wrap items-center justify-center gap-2 border-b border-gray-700 pb-4 animate-fade-in">

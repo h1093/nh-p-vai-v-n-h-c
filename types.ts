@@ -18,21 +18,19 @@ export const AIType = {
 
 export type AITypeKey = keyof typeof AIType;
 
-
-export interface Character {
-    id: string;
-    name: string;
-    appearance: string;
-    personality: string;
-    background: string;
-}
-
+// Dữ liệu nhân vật, không đổi
 export interface CharacterData {
     name: string;
     appearance: string;
     personality: string;
     background: string;
 }
+
+// Lưu trữ nhân vật có ID
+export interface Character extends CharacterData {
+    id: string;
+}
+
 
 export interface Work {
     id: string;
@@ -60,11 +58,6 @@ export interface HistoryMessage {
 
 export interface LorebookEntry {
     id:string;
-    key: string;
-    value: string;
-}
-
-export interface LorebookSuggestion {
     key: string;
     value: string;
 }
@@ -102,4 +95,38 @@ export interface ItemUpdate {
 export interface LastTurnInfo {
     prompt: string;
     previousWorldUpdate: string | null;
+}
+
+// --- HỆ THỐNG LƯU TRỮ MỚI ---
+export interface GameState {
+    id: string; // ID duy nhất cho mỗi bản lưu
+    character: CharacterData;
+    history: HistoryMessage[];
+    lorebook: LorebookEntry[];
+    affinity: AffinityData;
+    inventory: Item[];
+    equipment: Equipment;
+    companions: string[];
+    dating: string | null;
+    spouse: string | null;
+    gameTime: number;
+    offScreenWorldUpdate: string | null;
+    lastTurnInfo: LastTurnInfo | null;
+    isNsfwEnabled: boolean;
+    // Dữ liệu về tác phẩm được lưu dưới dạng có thể tuần tự hóa
+    selectedWorkId: string;
+    customWorkData?: {
+        title: string;
+        author: string;
+        content: string;
+    };
+}
+
+export interface SaveSlot {
+    id: string;
+    version: string;
+    timestamp: number;
+    characterName: string;
+    workTitle: string;
+    gameState: GameState;
 }

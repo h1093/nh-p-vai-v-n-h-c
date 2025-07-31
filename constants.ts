@@ -1,9 +1,9 @@
 import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
-export const SAVE_GAME_KEY = 'literary-rpg-save-v12';
-export const CHARACTERS_SAVE_KEY = 'literary-rpg-characters';
 export const API_KEY_STORAGE_KEY = 'gemini-api-key';
+export const SAVE_GAME_KEY = 'narrative-game-saves-v14'; // Key cho các màn chơi đã lưu
+export const CHARACTERS_SAVE_KEY = 'narrative-game-characters-v2'; // Key cho các nhân vật đã lưu
 
 export interface ChangelogEntry {
   version: string;
@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 }
 
 export const CHANGELOG_ENTRIES: ChangelogEntry[] = [
+    {
+        version: "v1.7 - Khôi phục và Tái thiết",
+        date: "Tháng 7, 2024",
+        changes: [
+            "Xây dựng lại hoàn toàn hệ thống lưu trữ từ đầu với mục tiêu ổn định và đơn giản hóa.",
+            "Thêm lại tính năng lưu/tải nhiều màn chơi. Giờ đây bạn có thể có nhiều cuộc phiêu lưu song song.",
+            "Thêm lại tính năng lưu/tải các nhân vật đã tạo để tái sử dụng.",
+            "Nền tảng lưu trữ mới sử dụng cơ chế tự động đồng bộ để đảm bảo tính nhất quán và loại bỏ các lỗi trước đây.",
+            "Giao diện được thiết kế lại để hiển thị danh sách các màn chơi và nhân vật đã lưu một cách trực quan.",
+            "Nút 'Thoát' được đổi lại thành 'Lưu & Thoát' đúng với chức năng.",
+        ],
+    },
     {
         version: "v1.6 - AI Nhận thức Tính cách",
         date: "Tháng 7, 2024",
