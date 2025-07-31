@@ -2,6 +2,8 @@
 
 
 
+
+
 import { useState, useCallback, useEffect } from 'react';
 import { GoogleGenAI } from "@google/genai";
 
@@ -449,6 +451,37 @@ export const useGameLogic = () => {
         }
     }, []);
 
+    const handleExportGame = useCallback((saveId: string) => {
+        const slot = savedGames.find(s => s.id === saveId);
+        if (!slot) {
+            console.error("Không tìm thấy tệp lưu để xuất.");
+            return;
+        }
+
+        try {
+            const characterName = slot.characterName.replace(/[^a-z0-9-_]/gi, '_').toLowerCase();
+            const workTitle = slot.workTitle.replace(/[^a-z0-9-_]/gi, '_').toLowerCase();
+            const timestamp = new Date(slot.timestamp).toISOString().split('T')[0];
+            const fileName = `save_${workTitle}_${characterName}_${timestamp}.json`;
+
+            const dataStr = JSON.stringify(slot.gameState, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json;charset=utf-8' });
+            const url = URL.createObjectURL(dataBlob);
+
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error("Lỗi khi xuất tệp lưu:", e);
+            setError("Đã có lỗi xảy ra khi cố gắng xuất tệp lưu.");
+        }
+    }, [savedGames]);
+
     const handleDeleteCharacter = useCallback((charId: string) => {
         if(window.confirm("Bạn có chắc muốn xóa nhân vật này?")) {
             setSavedCharacters(prev => prev.filter(c => c.id !== charId));
@@ -548,7 +581,7 @@ export const useGameLogic = () => {
         handleEquipItem, handleUnequipItem, handleConfess, handlePropose, handleChatWithCompanion,
         handleGiveGiftToCompanion, handleAddLoreEntry, handleUpdateLoreEntry, handleDeleteLoreEntry,
         handleAddSuggestedLoreEntry, handleDismissSuggestedLoreEntry,
-        handleLoadGame, handleDeleteGame, handleDeleteCharacter,
+        handleLoadGame, handleDeleteGame, handleExportGame, handleDeleteCharacter,
         // Constants
         LITERARY_WORKS, CHANGELOG_ENTRIES,
     };

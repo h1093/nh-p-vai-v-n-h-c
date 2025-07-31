@@ -70,6 +70,7 @@ const App = () => {
     handleDismissSuggestedLoreEntry,
     handleLoadGame,
     handleDeleteGame,
+    handleExportGame,
     handleDeleteCharacter,
     LITERARY_WORKS,
     CHANGELOG_ENTRIES,
@@ -90,6 +91,7 @@ const App = () => {
             onShowChangelog={() => setIsChangelogOpen(true)}
             onLoadGame={handleLoadGame}
             onDeleteGame={handleDeleteGame}
+            onExportGame={handleExportGame}
           />
         );
       case GameStatus.WorldCreation:

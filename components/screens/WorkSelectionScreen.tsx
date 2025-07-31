@@ -11,11 +11,12 @@ interface WorkSelectionScreenProps {
     onShowChangelog: () => void;
     onLoadGame: (id: string) => void;
     onDeleteGame: (id: string) => void;
+    onExportGame: (id: string) => void;
 }
 
 const WorkSelectionScreen = ({
     works, savedGames, onSelectWork, onCreateCustom, onChangeApiKey,
-    onShowChangelog, onLoadGame, onDeleteGame
+    onShowChangelog, onLoadGame, onDeleteGame, onExportGame
 }: WorkSelectionScreenProps) => {
 
     const sortedSavedGames = [...savedGames].sort((a, b) => b.timestamp - a.timestamp);
@@ -50,6 +51,7 @@ const WorkSelectionScreen = ({
                                 </div>
                                 <div className="flex-shrink-0 flex items-center gap-2">
                                     <ChoiceButton onClick={() => onLoadGame(slot.id)} variant="primary">Tải</ChoiceButton>
+                                    <ChoiceButton onClick={() => onExportGame(slot.id)} variant="secondary" title="Xuất tệp lưu dưới dạng .json">Xuất</ChoiceButton>
                                     <ChoiceButton onClick={() => onDeleteGame(slot.id)} variant="danger">Xóa</ChoiceButton>
                                 </div>
                             </li>
