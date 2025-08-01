@@ -14,6 +14,7 @@ export interface StorySegmentResult {
     datingUpdate?: { partnerName: string };
     marriageUpdate?: { spouseName: string };
     pregnancyUpdate?: { partnerName: string };
+    lorebookEntriesToDelete?: string[];
     offScreenWorldUpdate: string;
     timePassed: number;
   }
@@ -85,6 +86,14 @@ const worldSchema = {
     datingUpdate: { type: Type.OBJECT, properties: { partnerName: { type: Type.STRING } } },
     marriageUpdate: { type: Type.OBJECT, properties: { spouseName: { type: Type.STRING } } },
     pregnancyUpdate: { type: Type.OBJECT, properties: { partnerName: { type: Type.STRING } } },
+    lorebookEntriesToDelete: {
+      type: Type.ARRAY,
+      description: "Một danh sách các ID của các mục trong Sổ tay (Lorebook) đã lỗi thời, không còn liên quan hoặc không chính xác nữa và cần được xóa.",
+      items: {
+        type: Type.STRING,
+        description: "ID của một mục Sổ tay cần xóa."
+      }
+    },
     offScreenWorldUpdate: { type: Type.STRING },
     timePassed: { type: Type.INTEGER }
   }

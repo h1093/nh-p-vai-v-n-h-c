@@ -123,6 +123,7 @@ QUY TẮC:
 8.  **Luôn tuân thủ bối cảnh 18+:**
     *   Nếu BẬT: Các sự kiện có thể gai góc, thực tế hơn. Việc mang thai có thể là hệ quả của các hành động thân mật thể xác.
     *   Nếu TẮT: Các sự kiện phải trong sáng. Việc mang thai chỉ là hệ quả của các tương tác lãng mạn thuần túy, không đề cập đến hành vi thể xác.
+9.  **Dọn dẹp Sổ tay (lorebookEntriesToDelete):** Dựa trên các sự kiện gần đây, xác định các mục trong Sổ tay đã trở nên lỗi thời, không chính xác hoặc không còn quan trọng với cốt truyện nữa. Trả về một danh sách ID của các mục này để xóa. Ví dụ: một nhân vật phụ đã chết, một nhiệm vụ đã hoàn thành, hoặc một thông tin tạm thời không còn giá trị. Chỉ xóa khi có lý do chính đáng. Nếu không có gì để xóa, trả về một mảng rỗng.
 `;
 
 const baseStorytellerSystemInstruction = `

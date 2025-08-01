@@ -176,7 +176,7 @@ export const useGameLogic = () => {
         };
         setHistory(prev => [...prev, newModelMessage]);
 
-        const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, pregnancyUpdate, offScreenWorldUpdate, timePassed } = worldStateChanges;
+        const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, pregnancyUpdate, offScreenWorldUpdate, timePassed, lorebookEntriesToDelete } = worldStateChanges;
 
         if (affinityUpdates?.length > 0) {
             setAffinity(prev => affinityUpdates.reduce((acc, u) => ({...acc, [u.npcName]: Math.max(-100, Math.min(100, (acc[u.npcName] || 0) + u.change))}), {...prev}));
@@ -194,6 +194,10 @@ export const useGameLogic = () => {
                 });
                 return newInv;
             });
+        }
+        
+        if (lorebookEntriesToDelete && lorebookEntriesToDelete.length > 0) {
+            setLorebook(prev => prev.filter(entry => !lorebookEntriesToDelete.includes(entry.id)));
         }
 
         if (companions) setCompanions(companions);
