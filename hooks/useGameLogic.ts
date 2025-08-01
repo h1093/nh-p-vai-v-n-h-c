@@ -88,6 +88,70 @@ const applyWorldStateChanges = (
     setters.setGameTime(prev => prev + (timePassed || 15));
 };
 
+/**
+ * Tải trạng thái từ một đối tượng GameState vào các state hook của React.
+ * Hàm này đóng gói logic để thiết lập các state riêng lẻ,
+ * làm cho logic tải game chính sạch hơn.
+ * @param gameState Đối tượng GameState chứa dữ liệu cần tải.
+ * @param setters Một đối tượng chứa tất cả các hàm thiết lập state.
+ * @returns Work object nếu thành công, null nếu thất bại.
+ */
+const loadStateFromGameState = (
+    gameState: GameState,
+    setters: {
+        setSelectedWork: React.Dispatch<React.SetStateAction<Work | null>>,
+        setCharacter: React.Dispatch<React.SetStateAction<CharacterData | null>>,
+        setHistory: React.Dispatch<React.SetStateAction<HistoryMessage[]>>,
+        setLorebook: React.Dispatch<React.SetStateAction<LorebookEntry[]>>,
+        setAffinity: React.Dispatch<React.SetStateAction<AffinityData>>,
+        setInventory: React.Dispatch<React.SetStateAction<Item[]>>,
+        setEquipment: React.Dispatch<React.SetStateAction<Equipment>>,
+        setCompanions: React.Dispatch<React.SetStateAction<string[]>>,
+        setDating: React.Dispatch<React.SetStateAction<string | null>>,
+        setSpouse: React.Dispatch<React.SetStateAction<string | null>>,
+        setPregnancy: React.Dispatch<React.SetStateAction<{ partnerName: string; conceptionTime: number; } | null>>,
+        setGameTime: React.Dispatch<React.SetStateAction<number>>,
+        setOffScreenWorldUpdate: React.Dispatch<React.SetStateAction<string | null>>,
+        setLastTurnInfo: React.Dispatch<React.SetStateAction<LastTurnInfo | null>>,
+        setIsNsfwEnabled: React.Dispatch<React.SetStateAction<boolean>>,
+        setActiveSaveId: React.Dispatch<React.SetStateAction<string | null>>,
+        setSuggestedActions: React.Dispatch<React.SetStateAction<string[]>>,
+        setTurnCount: React.Dispatch<React.SetStateAction<number>>,
+        setStatus: React.Dispatch<React.SetStateAction<keyof typeof GameStatus>>,
+    }
+): Work | null => {
+    let work: Work | undefined = LITERARY_WORKS.find(w => w.id === gameState.selectedWorkId);
+    if (!work && gameState.customWorkData) {
+        work = createCustomLiteraryWork(gameState.customWorkData.title, gameState.customWorkData.author, gameState.customWorkData.content);
+    }
+    
+    if (!work) {
+        return null;
+    }
+
+    setters.setSelectedWork(work);
+    setters.setCharacter(gameState.character);
+    setters.setHistory(gameState.history);
+    setters.setLorebook(gameState.lorebook);
+    setters.setAffinity(gameState.affinity);
+    setters.setInventory(gameState.inventory);
+    setters.setEquipment(gameState.equipment);
+    setters.setCompanions(gameState.companions);
+    setters.setDating(gameState.dating);
+    setters.setSpouse(gameState.spouse);
+    setters.setPregnancy(gameState.pregnancy);
+    setters.setGameTime(gameState.gameTime);
+    setters.setOffScreenWorldUpdate(gameState.offScreenWorldUpdate);
+    setters.setLastTurnInfo(gameState.lastTurnInfo);
+    setters.setIsNsfwEnabled(gameState.isNsfwEnabled);
+    setters.setActiveSaveId(gameState.id);
+    setters.setSuggestedActions(gameState.suggestedActions || []);
+    setters.setTurnCount(gameState.turnCount || 0);
+    setters.setStatus(GameStatus.Playing);
+
+    return work;
+};
+
 export const useGameLogic = () => {
     // --- Core State ---
     const [status, setStatus] = useState<keyof typeof GameStatus>(GameStatus.Loading);
@@ -480,38 +544,19 @@ export const useGameLogic = () => {
         if (!slot) return;
         
         resetFullGameState();
-        const { gameState } = slot;
         
-        let work: Work | undefined = LITERARY_WORKS.find(w => w.id === gameState.selectedWorkId);
-        if (!work && gameState.customWorkData) {
-            work = createCustomLiteraryWork(gameState.customWorkData.title, gameState.customWorkData.author, gameState.customWorkData.content);
-        }
+        const work = loadStateFromGameState(slot.gameState, {
+            setSelectedWork, setCharacter, setHistory, setLorebook, setAffinity,
+            setInventory, setEquipment, setCompanions, setDating, setSpouse,
+            setPregnancy, setGameTime, setOffScreenWorldUpdate, setLastTurnInfo,
+            setIsNsfwEnabled, setActiveSaveId, setSuggestedActions, setTurnCount, setStatus
+        });
         
         if (!work) {
             setError("Không thể tải màn chơi. Dữ liệu tác phẩm không hợp lệ.");
             setSavedGames(prev => prev.filter(s => s.id !== saveId)); // Remove corrupted save
             return;
         }
-
-        setSelectedWork(work);
-        setCharacter(gameState.character);
-        setHistory(gameState.history);
-        setLorebook(gameState.lorebook);
-        setAffinity(gameState.affinity);
-        setInventory(gameState.inventory);
-        setEquipment(gameState.equipment);
-        setCompanions(gameState.companions);
-        setDating(gameState.dating);
-        setSpouse(gameState.spouse);
-        setPregnancy(gameState.pregnancy);
-        setGameTime(gameState.gameTime);
-        setOffScreenWorldUpdate(gameState.offScreenWorldUpdate);
-        setLastTurnInfo(gameState.lastTurnInfo);
-        setIsNsfwEnabled(gameState.isNsfwEnabled);
-        setActiveSaveId(gameState.id);
-        setSuggestedActions(gameState.suggestedActions || []);
-        setTurnCount(gameState.turnCount || 0);
-        setStatus(GameStatus.Playing);
         
     }, [savedGames, resetFullGameState]);
 

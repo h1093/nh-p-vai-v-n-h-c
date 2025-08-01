@@ -64,12 +64,6 @@ export interface LorebookEntry {
     value: string;
 }
 
-export interface LorebookSuggestion {
-  key: string;
-  value: string;
-  reason: string;
-}
-
 export interface AffinityUpdate {
     npcName: string;
     change: number;
