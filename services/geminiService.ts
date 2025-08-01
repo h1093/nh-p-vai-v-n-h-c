@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { GEMINI_MODEL, getSystemInstructionWithContext } from "../constants";
-import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey } from "../types";
+import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, LorebookSuggestion, HistoryMessage } from "../types";
 
 export interface StorySegmentResult {
   narrative: string;
@@ -14,7 +14,6 @@ export interface StorySegmentResult {
     datingUpdate?: { partnerName: string };
     marriageUpdate?: { spouseName: string };
     pregnancyUpdate?: { partnerName: string };
-    lorebookEntriesToDelete?: string[];
     offScreenWorldUpdate: string;
     timePassed: number;
   }
@@ -86,14 +85,6 @@ const worldSchema = {
     datingUpdate: { type: Type.OBJECT, properties: { partnerName: { type: Type.STRING } } },
     marriageUpdate: { type: Type.OBJECT, properties: { spouseName: { type: Type.STRING } } },
     pregnancyUpdate: { type: Type.OBJECT, properties: { partnerName: { type: Type.STRING } } },
-    lorebookEntriesToDelete: {
-      type: Type.ARRAY,
-      description: "Một danh sách các ID của các mục trong Sổ tay (Lorebook) đã lỗi thời, không còn liên quan hoặc không chính xác nữa và cần được xóa.",
-      items: {
-        type: Type.STRING,
-        description: "ID của một mục Sổ tay cần xóa."
-      }
-    },
     offScreenWorldUpdate: { type: Type.STRING },
     timePassed: { type: Type.INTEGER }
   }
@@ -116,87 +107,6 @@ const characterSchema = {
     required: ["dialogue"]
 };
 
-const entityExtractionSchema = {
-    type: Type.OBJECT,
-    properties: {
-        entities: {
-            type: Type.ARRAY,
-            description: "Danh sách các thực thể được trích xuất.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    key: {
-                        type: Type.STRING,
-                        description: "Tên của thực thể (nhân vật, địa điểm, vật phẩm, v.v.)."
-                    },
-                    value: {
-                        type: Type.STRING,
-                        description: "Một mô tả ngắn gọn, một câu về thực thể dựa trên văn bản."
-                    }
-                },
-                required: ["key", "value"]
-            }
-        }
-    },
-    required: ["entities"]
-};
-
-export async function extractEntitiesFromText(
-    ai: GoogleGenAI,
-    narrativeText: string,
-    existingLore: LorebookEntry[],
-    character: CharacterData
-): Promise<Array<{key: string, value: string}>> {
-    const systemInstruction = `Bạn là một trợ lý AI cho một game nhập vai dựa trên văn bản. Nhiệm vụ của bạn là đọc một đoạn tường thuật và trích xuất các thực thể quan trọng, MỚI (nhân vật, địa điểm, vật phẩm, khái niệm) để đề xuất cho Sổ tay (Lorebook) của trò chơi.
-
-QUY TẮC CỐT LÕI:
-1.  **Chỉ trích xuất thực thể MỚI:** So sánh với 'Tên người chơi' và 'Các khóa Sổ tay đã có'. Bất kỳ thực thể nào đã tồn tại trong các danh sách đó phải được BỎ QUA.
-2.  **Một câu mô tả:** Cung cấp một mô tả ngắn gọn (một câu) cho mỗi thực thể, chỉ dựa trên thông tin trong đoạn văn.
-3.  **Định dạng JSON:** Luôn trả về kết quả dưới dạng JSON theo schema đã cho. Nếu không có thực thể mới nào, trả về một danh sách 'entities' rỗng.
-
-Tên người chơi (phải bỏ qua): "${character.name}"
-Các khóa Sổ tay đã có (phải bỏ qua): [${existingLore.map(e => `"${e.key}"`).join(', ')}]
-
-VÍ DỤ:
--   **Đoạn văn:** "Chí Phèo bước vào quán rượu của bà Ba, một người đàn bà góa nổi tiếng khó tính. Hắn gọi một chai rượu và nhìn ra con đường làng quen thuộc."
--   **Sổ tay đã có:** ["Chí Phèo", "con đường làng"]
--   **Kết quả đúng:**
-    \`\`\`json
-    {
-      "entities": [
-        {
-          "key": "bà Ba",
-          "value": "Chủ quán rượu, là một người đàn bà góa nổi tiếng khó tính."
-        },
-        {
-          "key": "quán rượu của bà Ba",
-          "value": "Nơi Chí Phèo bước vào để gọi rượu."
-        }
-      ]
-    }
-    \`\`\`
--   **Giải thích:** "Chí Phèo" và "con đường làng" bị bỏ qua vì đã có trong Sổ tay. "bà Ba" và "quán rượu của bà Ba" là mới và được trích xuất.
-`;
-
-    const response = await withRetry(() => ai.models.generateContent({
-        model: GEMINI_MODEL,
-        contents: `Đây là đoạn văn tường thuật để phân tích:\n\n---\n${narrativeText}\n---`,
-        config: {
-            systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema: entityExtractionSchema
-        }
-    }));
-
-    try {
-        const result = JSON.parse(response.text.trim());
-        return result.entities || [];
-    } catch (e) {
-        console.error("Lỗi phân tích phản hồi trích xuất thực thể:", response.text, e);
-        return [];
-    }
-}
-
 export async function generateStorySegment(
     ai: GoogleGenAI,
     prompt: string,
@@ -218,7 +128,7 @@ export async function generateStorySegment(
 
     // 1. World AI
     setActiveAI('World');
-    const worldSystemInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled);
+    const worldSystemInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, turnSummary);
     const worldResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: turnSummary,
@@ -235,8 +145,8 @@ export async function generateStorySegment(
     
     // 2. Storyteller AI
     setActiveAI('Storyteller');
-    const storytellerSystemInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled);
     const storytellerPrompt = `Hành động của người chơi: "${prompt}".\nCập nhật thế giới ngoài màn hình: "${worldJson.offScreenWorldUpdate || 'Không có.'}"`;
+    const storytellerSystemInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, storytellerPrompt);
     const storytellerResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: storytellerPrompt,
@@ -261,7 +171,6 @@ export async function generateStorySegment(
 
     if (dialoguePlaceholders.length > 0) {
         setActiveAI('Character');
-        const characterSystemInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled);
         
         for (const placeholder of dialoguePlaceholders) {
             const npcNameMatch = placeholder.match(/\[DIALOGUE:"(.*?)"\]/);
@@ -271,6 +180,7 @@ export async function generateStorySegment(
                 finalAiType = 'Character';
 
                 const characterPrompt = `Trong bối cảnh sau đây, hãy viết lời thoại cho nhân vật ${npcName}:\n\n${narrative}`;
+                const characterSystemInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, characterPrompt);
                 const characterResponse = await withRetry(() => ai.models.generateContent({
                     model: GEMINI_MODEL,
                     contents: characterPrompt,
@@ -299,4 +209,106 @@ export async function generateStorySegment(
         suggestedActions,
         worldStateChanges: worldJson
     };
+}
+
+const lorebookSuggestionSchema = {
+    type: Type.OBJECT,
+    properties: {
+        suggestions: {
+            type: Type.ARRAY,
+            description: "Danh sách các mục sổ tay được đề xuất.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    key: { type: Type.STRING, description: "Tên của thực thể (nhân vật, địa điểm, vật phẩm). Phải là danh từ riêng hoặc một khái niệm độc nhất." },
+                    value: { type: Type.STRING, description: "Mô tả chi tiết, khách quan về thực thể đó." },
+                    reason: { type: Type.STRING, description: "Lý do tại sao mục này nên được thêm vào sổ tay, dựa trên đoạn văn bản." }
+                },
+                required: ["key", "value", "reason"]
+            }
+        }
+    },
+    required: ["suggestions"]
+};
+
+export async function generateLorebookSuggestions(
+    ai: GoogleGenAI,
+    narrativeText: string,
+    existingLoreKeys: string[]
+): Promise<LorebookSuggestion[]> {
+    const systemInstruction = `Bạn là một AI trợ lý biên tập, giúp người chơi xây dựng một "sổ tay" (lorebook) để theo dõi các chi tiết quan trọng trong câu chuyện nhập vai.
+Nhiệm vụ của bạn là đọc đoạn văn bản tường thuật và trích xuất các thực thể (nhân vật, địa điểm, vật phẩm quan trọng, khái niệm mới) chưa có trong sổ tay.
+
+QUY TẮC:
+1. Chỉ đề xuất các thực thể MỚI. So sánh với danh sách các khóa đã có và loại bỏ bất kỳ đề xuất nào đã tồn tại.
+2. 'key' phải là một danh từ riêng hoặc một khái niệm cụ thể (ví dụ: "Lão Hạc", "Làng Vũ Đại", "Cái lò gạch cũ").
+3. 'value' phải là một mô tả khách quan, dựa trên thông tin trong văn bản.
+4. 'reason' giải thích ngắn gọn tại sao thực thể này quan trọng và đáng để ghi nhớ.
+5. Nếu không có thực thể mới nào đáng chú ý, hãy trả về một mảng rỗng trong trường 'suggestions'.
+
+Các khóa đã có trong sổ tay (Không đề xuất lại): ${existingLoreKeys.join(', ') || "Chưa có"}
+`;
+
+    const response = await withRetry(() => ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: `Hãy phân tích đoạn văn sau và đề xuất các mục cho sổ tay:\n\n${narrativeText}`,
+        config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: lorebookSuggestionSchema
+        }
+    }));
+    
+    try {
+        const json = JSON.parse(response.text.trim());
+        return (json.suggestions || []) as LorebookSuggestion[];
+    } catch (e) {
+        console.error("Lỗi phân tích JSON từ Lorebook Suggestion AI:", response.text, e);
+        return []; // Return empty on error to not break the game
+    }
+}
+
+const summarySchema = {
+    type: Type.OBJECT,
+    properties: {
+        summary: { type: Type.STRING, description: "Nội dung tóm tắt khoảng 2-4 câu, viết ở ngôi thứ nhất." },
+    },
+    required: ["summary"]
+};
+
+
+export async function generateSummary(
+    ai: GoogleGenAI, 
+    historyToSummarize: HistoryMessage[], 
+    character: CharacterData
+): Promise<string> {
+    const systemInstruction = `Bạn là một AI có khả năng tóm tắt. Nhiệm vụ của bạn là đọc một loạt các sự kiện từ một câu chuyện nhập vai và viết một bản tóm tắt ngắn gọn, mạch lạc (khoảng 2-4 câu) ở ngôi thứ nhất, như thể là ký ức của nhân vật chính. Chỉ trả về nội dung tóm tắt trong một đối tượng JSON.`;
+
+    const formattedHistory = historyToSummarize.map(msg => {
+        if (msg.role === 'user') {
+            return `Tôi đã làm: "${msg.content}"`;
+        } else {
+            return `Kết quả: ${msg.content}`;
+        }
+    }).join('\n');
+    
+    const prompt = `Đây là các sự kiện vừa xảy ra:\nNhân vật của tôi: ${character.name}\n${formattedHistory}\n\nHãy tóm tắt lại những sự kiện trên từ góc nhìn của tôi.`;
+
+    const response = await withRetry(() => ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: prompt,
+        config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: summarySchema,
+        }
+    }));
+
+    try {
+        const json = JSON.parse(response.text.trim());
+        return json.summary;
+    } catch (e) {
+        console.error("Lỗi phân tích JSON từ Summary AI:", response.text, e);
+        return response.text.trim();
+    }
 }

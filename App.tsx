@@ -37,9 +37,9 @@ const App = () => {
     isLorebookOpen,
     isChangelogOpen,
     suggestedActions,
-    lorebookSuggestions,
     savedGames,
     savedCharacters,
+    lorebookSuggestions,
     setIsLorebookOpen,
     setIsChangelogOpen,
     handleApiKeySubmit,
@@ -66,13 +66,14 @@ const App = () => {
     handleAddLoreEntry,
     handleUpdateLoreEntry,
     handleDeleteLoreEntry,
-    handleAddSuggestedLoreEntry,
-    handleDismissSuggestedLoreEntry,
     handleLoadGame,
     handleDeleteGame,
     handleExportGame,
     handleImportGame,
     handleDeleteCharacter,
+    handleAcceptLoreSuggestion,
+    handleDismissLoreSuggestion,
+    handleDismissAllLoreSuggestions,
     LITERARY_WORKS,
     CHANGELOG_ENTRIES,
   } = useGameLogic();
@@ -155,8 +156,9 @@ const App = () => {
             onGiveGift={handleGiveGiftToCompanion}
             suggestedActions={suggestedActions}
             lorebookSuggestions={lorebookSuggestions}
-            onAddSuggestedLoreEntry={handleAddSuggestedLoreEntry}
-            onDismissSuggestedLoreEntry={handleDismissSuggestedLoreEntry}
+            onAcceptLoreSuggestion={handleAcceptLoreSuggestion}
+            onDismissLoreSuggestion={handleDismissLoreSuggestion}
+            onDismissAllLoreSuggestions={handleDismissAllLoreSuggestions}
           />
         );
       case GameStatus.Error:

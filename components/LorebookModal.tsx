@@ -10,10 +10,20 @@ interface LorebookModalProps {
   onDelete: (id: string) => void;
 }
 
-const LorebookModal = ({ isOpen, onClose, entries, onAdd, onUpdate, onDelete }: LorebookModalProps) => {
+const LorebookModal = (props: LorebookModalProps) => {
+  const { 
+    isOpen, onClose, entries, onAdd, onUpdate, onDelete,
+  } = props;
+
   const [isEditing, setIsEditing] = useState<LorebookEntry | null>(null);
   const [currentKey, setCurrentKey] = useState('');
   const [currentValue, setCurrentValue] = useState('');
+
+  useEffect(() => {
+    if (!isOpen) {
+        setIsEditing(null);
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     if (isEditing) {
@@ -38,26 +48,26 @@ const LorebookModal = ({ isOpen, onClose, entries, onAdd, onUpdate, onDelete }: 
     }
     setIsEditing(null);
   };
-
+  
   const handleCancelEdit = () => {
     setIsEditing(null);
   };
-
+  
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 z-40 flex items-center justify-center p-4" onClick={onClose}>
-      <div className="relative bg-gray-800 rounded-xl shadow-2xl shadow-black/20 border border-gray-700 w-full max-w-2xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <header className="p-6 border-b border-gray-700 flex justify-between items-center">
+      <div className="relative bg-gray-800 rounded-xl shadow-2xl shadow-black/20 border border-gray-700 w-full max-w-4xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
+        <header className="p-6 border-b border-gray-700 flex justify-between items-center flex-shrink-0">
           <h2 className="text-3xl font-serif-display font-bold text-gray-100">Sổ tay Thế giới</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-white">
+          <button onClick={onClose} className="text-gray-400 hover:text-white self-start">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
         </header>
         
-        <div className="p-6 overflow-y-auto flex-grow">
+        <div className="overflow-y-auto flex-grow p-6">
           {entries.length === 0 && !isEditing ? (
             <div className="text-center py-12">
               <p className="text-gray-400">Sổ tay của bạn đang trống.</p>
-              <p className="text-gray-400 mt-1">Thêm một mục mới bên dưới hoặc chờ gợi ý tự động từ câu chuyện.</p>
+              <p className="text-gray-400 mt-1">Sử dụng biểu mẫu bên dưới để thêm một mục mới.</p>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -77,7 +87,7 @@ const LorebookModal = ({ isOpen, onClose, entries, onAdd, onUpdate, onDelete }: 
           )}
         </div>
         
-        <footer className="p-6 border-t border-gray-700 bg-gray-900 rounded-b-xl">
+        <footer className="p-6 border-t border-gray-700 bg-gray-900 rounded-b-xl flex-shrink-0">
           <h3 className="text-xl font-serif-display font-bold text-gray-300 mb-4">{isEditing ? 'Chỉnh sửa mục' : 'Thêm mục mới'}</h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <input

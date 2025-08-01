@@ -4,6 +4,8 @@ export const GEMINI_MODEL = 'gemini-2.5-flash';
 export const API_KEY_STORAGE_KEY = 'gemini-api-key';
 export const SAVE_GAME_KEY = 'narrative-game-saves-v14'; // Key cho các màn chơi đã lưu
 export const CHARACTERS_SAVE_KEY = 'narrative-game-characters-v2'; // Key cho các nhân vật đã lưu
+export const SUMMARY_TURN_THRESHOLD = 5; // Tóm tắt sau mỗi 5 lượt chơi
+
 
 export interface ChangelogEntry {
   version: string;
@@ -65,7 +67,8 @@ export const getSystemInstructionWithContext = (
     dating: string | null,
     pregnancy: { partnerName: string; conceptionTime: number; } | null,
     gameTime: number,
-    isNsfwEnabled: boolean
+    isNsfwEnabled: boolean,
+    relevantText: string
 ): string => {
     let context = `\n\n--- BỐI CẢNH HIỆN TẠI ---\n`;
     context += `Nhân vật của tôi:\nTên: ${character.name}\nGiới tính: ${character.gender}\nNgoại hình: ${character.appearance}\nTính cách: ${character.personality}\nHoàn cảnh: ${character.background}\n`;
@@ -76,7 +79,28 @@ export const getSystemInstructionWithContext = (
     }
     
     if (lorebook.length > 0) {
-        context += `Sổ tay: ${lorebook.map(e => `${e.key}: ${e.value} (id: ${e.id})`).join('; ')}\n`;
+        // Get the last 3 summaries, which are essential memory.
+        const recentSummaries = lorebook
+            .filter(entry => entry.key.toLowerCase().startsWith('tóm tắt chương'))
+            .slice(-3);
+
+        // Get other lore entries that are directly mentioned in the latest user/AI interaction.
+        const activeLore = lorebook.filter(entry => 
+            !entry.key.toLowerCase().startsWith('tóm tắt chương') &&
+            relevantText.toLowerCase().includes(entry.key.toLowerCase())
+        );
+
+        // Combine them, ensuring no duplicates.
+        const combinedLore = [...recentSummaries];
+        activeLore.forEach(lore => {
+            if (!combinedLore.find(l => l.id === lore.id)) {
+                combinedLore.push(lore);
+            }
+        });
+
+        if (combinedLore.length > 0) {
+            context += `Sổ tay (tóm tắt & mục liên quan): ${combinedLore.map(e => `${e.key}: ${e.value}`).join('; ')}\n`;
+        }
     }
 
     if(spouse) context += `Tôi đã kết hôn với ${spouse}.\n`;
@@ -121,7 +145,6 @@ QUY TẮC:
 8.  **Luôn tuân thủ bối cảnh 18+:**
     *   Nếu BẬT: Các sự kiện có thể gai góc, thực tế hơn. Việc mang thai có thể là hệ quả của các hành động thân mật thể xác.
     *   Nếu TẮT: Các sự kiện phải trong sáng. Việc mang thai chỉ là hệ quả của các tương tác lãng mạn thuần túy, không đề cập đến hành vi thể xác.
-9.  **Dọn dẹp Sổ tay (lorebookEntriesToDelete):** Dựa trên các sự kiện gần đây, xác định các mục trong Sổ tay đã trở nên lỗi thời, không chính xác hoặc không còn quan trọng với cốt truyện nữa. Trả về một danh sách ID của các mục này để xóa. Ví dụ: một nhân vật phụ đã chết, một nhiệm vụ đã hoàn thành, hoặc một thông tin tạm thời không còn giá trị. Chỉ xóa khi có lý do chính đáng. Nếu không có gì để xóa, trả về một mảng rỗng.
 `;
 
 const baseStorytellerSystemInstruction = `
@@ -168,7 +191,7 @@ export const LITERARY_WORKS: Work[] = [
         originalCharacterDescription: 'Vào vai Thúy Kiều, đối mặt với những biến cố nghiệt ngã của số phận, từ việc bán mình chuộc cha đến những ngày tháng đau khổ ở lầu xanh.',
         fanficDescription: 'Tạo một nhân vật mới trong thế giới của Truyện Kiều. Bạn có thể là một vị anh hùng, một kẻ qua đường, hay một người bạn sẽ sát cánh cùng Kiều?',
         initialPromptOriginal: 'Tôi là Thúy Kiều, vì gia đình gặp biến cố, tôi quyết định bán mình chuộc cha, bắt đầu chuỗi ngày lưu lạc. Mã Giám Sinh đến hỏi mua tôi.',
-        getFanficInitialPrompt: (c) => `Tôi là ${c.name}, một lãng khách đến thành Lâm Truy. Nghe đồn về vẻ đẹp và tài năng của Thúy Kiều, tôi tìm đến nhà nàng.`,
+        getFanficInitialPrompt: (c) => `Tôi là ${c.name}, một lãng khách đến thành Lâm Truy. Nghe đồn về vẻ đẹp và tài năng của Thúy Kiều, tôi tìm đến nàng.`,
         storytellerSystemInstruction: `${baseStorytellerSystemInstruction}\nVăn phong của bạn phải là thơ lục bát hoặc văn xuôi cổ trang, hoa mỹ, đầy điển tích như Nguyễn Du.`,
         characterSystemInstruction: `${baseCharacterSystemInstruction}\nCác nhân vật như Tú Bà thì xảo quyệt, Sở Khanh thì lừa lọc, Thúc Sinh thì yếu đuối, Từ Hải thì anh hùng.`,
         worldSystemInstruction: baseWorldSystemInstruction,

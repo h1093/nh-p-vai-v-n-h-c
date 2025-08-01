@@ -4,7 +4,6 @@ import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
-import ChoiceButton from './ChoiceButton';
 import LorebookSuggestions from './LorebookSuggestions';
 
 interface GameScreenProps {
@@ -34,8 +33,9 @@ interface GameScreenProps {
   onGiveGift: (npcName: string, item: Item) => void;
   suggestedActions: string[];
   lorebookSuggestions: LorebookSuggestion[];
-  onAddSuggestedLoreEntry: (suggestion: LorebookSuggestion) => void;
-  onDismissSuggestedLoreEntry: (id: string) => void;
+  onAcceptLoreSuggestion: (suggestion: LorebookSuggestion) => void;
+  onDismissLoreSuggestion: (suggestion: LorebookSuggestion) => void;
+  onDismissAllLoreSuggestions: () => void;
 }
 
 const GameScreen = (props: GameScreenProps) => {
@@ -43,7 +43,8 @@ const GameScreen = (props: GameScreenProps) => {
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
-      onChat, onGiveGift, suggestedActions, lorebookSuggestions, onAddSuggestedLoreEntry, onDismissSuggestedLoreEntry
+      onChat, onGiveGift, suggestedActions, lorebookSuggestions, onAcceptLoreSuggestion,
+      onDismissLoreSuggestion, onDismissAllLoreSuggestions
   } = props;
 
   const [input, setInput] = useState('');
@@ -139,7 +140,7 @@ const GameScreen = (props: GameScreenProps) => {
   const togglePanel = (panel: 'affinity' | 'inventory' | 'companions') => {
       setActivePanel(activePanel === panel ? null : panel);
   };
-
+  
   return (
   <div className="w-full max-w-4xl mx-auto flex flex-col h-[90vh] bg-gray-900 rounded-xl shadow-2xl shadow-black/20 border border-gray-700">
      <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-xl gap-2 md:gap-4">
@@ -189,7 +190,7 @@ const GameScreen = (props: GameScreenProps) => {
           </button>
           <button
               onClick={onOpenLorebook}
-              className="flex items-center gap-2 bg-gray-700 text-gray-200 font-semibold py-2 px-3 rounded-lg shadow-sm border border-gray-600 hover:bg-gray-600 transition-colors text-sm"
+              className="relative flex items-center gap-2 bg-gray-700 text-gray-200 font-semibold py-2 px-3 rounded-lg shadow-sm border border-gray-600 hover:bg-gray-600 transition-colors text-sm"
               title="Mở sổ tay"
           >
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" /></svg>
@@ -274,8 +275,9 @@ const GameScreen = (props: GameScreenProps) => {
     <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 rounded-b-xl">
       <LorebookSuggestions
         suggestions={lorebookSuggestions}
-        onAdd={onAddSuggestedLoreEntry}
-        onDismiss={onDismissSuggestedLoreEntry}
+        onAccept={onAcceptLoreSuggestion}
+        onDismiss={onDismissLoreSuggestion}
+        onDismissAll={onDismissAllLoreSuggestions}
       />
       {!loading && !editingMessage && suggestedActions.length > 0 && (
         <div className="mb-4 border-b border-gray-700 pb-4 animate-fade-in">
