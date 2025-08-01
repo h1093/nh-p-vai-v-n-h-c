@@ -3,15 +3,90 @@ import { GoogleGenAI } from "@google/genai";
 
 import {
     GameStatus, Work, CharacterData, HistoryMessage, LorebookEntry, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LastTurnInfo,
-    Character, GameState, SaveSlot, LorebookSuggestion
+    Character, GameState, SaveSlot
 } from '../types';
 import {
     LITERARY_WORKS, createCustomLiteraryWork, API_KEY_STORAGE_KEY, SAVE_GAME_KEY, CHARACTERS_SAVE_KEY, CHANGELOG_ENTRIES, SUMMARY_TURN_THRESHOLD
 } from '../constants';
-import { generateStorySegment, StorySegmentResult, generateLorebookSuggestions, generateSummary } from '../services/geminiService';
+import { generateStorySegment, StorySegmentResult, generateSummary } from '../services/geminiService';
 
 const initialEquipment: Equipment = { weapon: null, armor: null };
 const CURRENT_SAVE_VERSION = "v14";
+
+/**
+ * Áp dụng các thay đổi trạng thái thế giới từ AI vào trạng thái trò chơi.
+ * Hàm này đóng gói logic để cập nhật các biến trạng thái khác nhau,
+ * làm cho logic trò chơi chính sạch hơn và module hóa hơn.
+ * @param changes Đối tượng worldStateChanges từ AI.
+ * @param setters Một đối tượng chứa tất cả các hàm thiết lập trạng thái.
+ * @param currentState Một đối tượng chứa các giá trị trạng thái hiện tại cần thiết cho logic.
+ */
+const applyWorldStateChanges = (
+    changes: StorySegmentResult['worldStateChanges'],
+    setters: {
+        setAffinity: React.Dispatch<React.SetStateAction<AffinityData>>,
+        setInventory: React.Dispatch<React.SetStateAction<Item[]>>,
+        setCompanions: React.Dispatch<React.SetStateAction<string[]>>,
+        setDating: React.Dispatch<React.SetStateAction<string | null>>,
+        setSpouse: React.Dispatch<React.SetStateAction<string | null>>,
+        setPregnancy: React.Dispatch<React.SetStateAction<{ partnerName: string; conceptionTime: number; } | null>>,
+        setOffScreenWorldUpdate: React.Dispatch<React.SetStateAction<string | null>>,
+        setGameTime: React.Dispatch<React.SetStateAction<number>>
+    },
+    currentState: {
+        pregnancy: { partnerName: string; conceptionTime: number; } | null,
+        gameTime: number
+    }
+) => {
+    const { 
+        affinityUpdates, 
+        itemUpdates, 
+        companions, 
+        datingUpdate, 
+        marriageUpdate, 
+        pregnancyUpdate, 
+        offScreenWorldUpdate, 
+        timePassed 
+    } = changes;
+
+    if (affinityUpdates && affinityUpdates.length > 0) {
+        setters.setAffinity(prev => affinityUpdates.reduce((acc, u) => ({
+            ...acc,
+            [u.npcName]: Math.max(-100, Math.min(100, (acc[u.npcName] || 0) + u.change))
+        }), { ...prev }));
+    }
+
+    if (itemUpdates && itemUpdates.length > 0) {
+        setters.setInventory(prev => {
+            let newInv = [...prev];
+            itemUpdates.forEach(u => {
+                if (u.action === 'add') {
+                    newInv.push({ ...u.item, id: `item-${Date.now()}-${Math.random()}` });
+                } else {
+                    const idx = newInv.findIndex(i => i.name.toLowerCase() === u.item.name.toLowerCase());
+                    if (idx > -1) newInv.splice(idx, 1);
+                }
+            });
+            return newInv;
+        });
+    }
+    
+    if (companions) setters.setCompanions(companions);
+    if (datingUpdate?.partnerName) setters.setDating(datingUpdate.partnerName);
+    if (marriageUpdate?.spouseName) {
+        setters.setSpouse(marriageUpdate.spouseName);
+        setters.setDating(null); // Khi đã kết hôn, ngừng hẹn hò
+    }
+    if (pregnancyUpdate?.partnerName && !currentState.pregnancy) {
+        setters.setPregnancy({ 
+            partnerName: pregnancyUpdate.partnerName, 
+            conceptionTime: currentState.gameTime 
+        });
+    }
+
+    setters.setOffScreenWorldUpdate(offScreenWorldUpdate);
+    setters.setGameTime(prev => prev + (timePassed || 15));
+};
 
 export const useGameLogic = () => {
     // --- Core State ---
@@ -43,7 +118,6 @@ export const useGameLogic = () => {
     const [offScreenWorldUpdate, setOffScreenWorldUpdate] = useState<string | null>(null);
     const [gameTime, setGameTime] = useState(480); // Start at 8:00 AM
     const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
-    const [lorebookSuggestions, setLorebookSuggestions] = useState<LorebookSuggestion[]>([]);
     const [turnCount, setTurnCount] = useState(0);
     const [isSummarizing, setIsSummarizing] = useState(false);
 
@@ -126,75 +200,42 @@ export const useGameLogic = () => {
         setOffScreenWorldUpdate(null);
         setIsNsfwEnabled(false);
         setSuggestedActions([]);
-        setLorebookSuggestions([]);
         setGameTime(480);
         setTurnCount(0);
     }, []);
     
     const handleAddLoreEntry = useCallback((entry: { key: string, value: string }) => setLorebook(prev => [...prev, { ...entry, id: `lore-${Date.now()}` }]), []);
-
-    const getAndSetLorebookSuggestions = useCallback(async (narrative: string) => {
-        if (!ai) return;
-        const existingKeys = lorebook.map(e => e.key);
-        try {
-            const suggestions = await generateLorebookSuggestions(ai, narrative, existingKeys);
-            const newSuggestions = suggestions.filter(sugg => 
-                !existingKeys.some(existingKey => existingKey.toLowerCase() === sugg.key.toLowerCase())
-            );
-            setLorebookSuggestions(newSuggestions);
-        } catch (e) {
-            console.error("Không thể lấy gợi ý cho sổ tay:", e);
-        }
-    }, [ai, lorebook]);
     
     const processStoryResult = useCallback((result: StorySegmentResult) => {
         const { narrative, speaker, aiType, worldStateChanges, suggestedActions: newSuggestedActions } = result;
 
         const newModelMessage: HistoryMessage = {
-            role: 'model', content: narrative, id: `model-${Date.now()}`, speaker: speaker, aiType: aiType,
+            role: 'model',
+            content: narrative,
+            id: `model-${Date.now()}`,
+            speaker: speaker,
+            aiType: aiType,
         };
         setHistory(prev => [...prev, newModelMessage]);
 
-        const { affinityUpdates, itemUpdates, companions, datingUpdate, marriageUpdate, pregnancyUpdate, offScreenWorldUpdate, timePassed } = worldStateChanges;
+        applyWorldStateChanges(
+            worldStateChanges,
+            {
+                setAffinity,
+                setInventory,
+                setCompanions,
+                setDating,
+                setSpouse,
+                setPregnancy,
+                setOffScreenWorldUpdate,
+                setGameTime,
+            },
+            { pregnancy, gameTime }
+        );
 
-        if (affinityUpdates?.length > 0) {
-            setAffinity(prev => affinityUpdates.reduce((acc, u) => ({...acc, [u.npcName]: Math.max(-100, Math.min(100, (acc[u.npcName] || 0) + u.change))}), {...prev}));
-        }
-
-        if (itemUpdates?.length > 0) {
-            setInventory(prev => {
-                let newInv = [...prev];
-                itemUpdates.forEach(u => {
-                    if (u.action === 'add') newInv.push({ ...u.item, id: `item-${Date.now()}-${Math.random()}` });
-                    else {
-                        const idx = newInv.findIndex(i => i.name.toLowerCase() === u.item.name.toLowerCase());
-                        if (idx > -1) newInv.splice(idx, 1);
-                    }
-                });
-                return newInv;
-            });
-        }
-        
-        if (companions) setCompanions(companions);
-        if (datingUpdate?.partnerName) setDating(datingUpdate.partnerName);
-        if (marriageUpdate?.spouseName) {
-            setSpouse(marriageUpdate.spouseName);
-            setDating(null);
-        }
-        if (pregnancyUpdate?.partnerName && !pregnancy) {
-            setPregnancy({ 
-                partnerName: pregnancyUpdate.partnerName, 
-                conceptionTime: gameTime 
-            });
-        }
-
-        setOffScreenWorldUpdate(offScreenWorldUpdate);
-        setGameTime(prev => prev + (timePassed || 15));
         setSuggestedActions(newSuggestedActions || []);
-        
-        getAndSetLorebookSuggestions(narrative);
         setTurnCount(prev => prev + 1);
-    }, [pregnancy, gameTime, getAndSetLorebookSuggestions]);
+    }, [pregnancy, gameTime]);
     
      // --- Automatic Summarization Effect ---
     useEffect(() => {
@@ -280,7 +321,6 @@ export const useGameLogic = () => {
         setError(null);
         setLastTurnInfo({ prompt: initialPrompt, previousWorldUpdate: null });
         setSuggestedActions([]);
-        setLorebookSuggestions([]);
         setActiveAI(null);
 
         try {
@@ -579,7 +619,6 @@ export const useGameLogic = () => {
     // --- IN-GAME ACTION HANDLERS ---
     const handleUserInput = useCallback(async (userInput: string) => {
         setSuggestedActions([]);
-        setLorebookSuggestions([]);
         const newUserMessage: HistoryMessage = { role: 'user', content: userInput, id: `user-${Date.now()}` };
         setHistory(prev => [...prev, newUserMessage]);
         await handleGenerateStory(userInput, offScreenWorldUpdate);
@@ -600,7 +639,6 @@ export const useGameLogic = () => {
     const handleRegenerate = useCallback(async () => {
         if (!lastTurnInfo || isLoading) return;
         setSuggestedActions([]);
-        setLorebookSuggestions([]);
         setTurnCount(prev => Math.max(0, prev -1)); // Decrement turn count on regenerate
         const historyWithoutLastModelMessage = history.slice(0, -1);
         setHistory(historyWithoutLastModelMessage);
@@ -649,23 +687,10 @@ export const useGameLogic = () => {
         handleUserInput(`Tôi lấy ${item.name} từ trong túi đồ của mình và tặng nó cho ${npcName}.`);
     }, [handleUserInput]);
     
-    const handleAcceptLoreSuggestion = useCallback((suggestion: LorebookSuggestion) => {
-        handleAddLoreEntry({ key: suggestion.key, value: suggestion.value });
-        setLorebookSuggestions(prev => prev.filter(s => s.key !== suggestion.key));
-    }, [handleAddLoreEntry]);
-
-    const handleDismissLoreSuggestion = useCallback((suggestion: LorebookSuggestion) => {
-        setLorebookSuggestions(prev => prev.filter(s => s.key !== suggestion.key));
-    }, []);
-
-    const handleDismissAllLoreSuggestions = useCallback(() => {
-        setLorebookSuggestions([]);
-    }, []);
-
     return {
         status, ai, isLoading, activeAI, selectedWork, character, history, lastTurnInfo, error, isNsfwEnabled,
         lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, offScreenWorldUpdate, gameTime, isLorebookOpen, isChangelogOpen,
-        suggestedActions, savedGames, savedCharacters, lorebookSuggestions,
+        suggestedActions, savedGames, savedCharacters,
         // Setters / Handlers
         setIsLorebookOpen, setIsChangelogOpen,
         handleApiKeySubmit, handleChangeApiKey, handleSelectWork, handleStartWorldCreation, handleCreateCustomWork,
@@ -674,7 +699,6 @@ export const useGameLogic = () => {
         handleEquipItem, handleUnequipItem, handleConfess, handlePropose, handleChatWithCompanion,
         handleGiveGiftToCompanion, handleAddLoreEntry, handleUpdateLoreEntry, handleDeleteLoreEntry,
         handleLoadGame, handleDeleteGame, handleExportGame, handleImportGame, handleDeleteCharacter,
-        handleAcceptLoreSuggestion, handleDismissLoreSuggestion, handleDismissAllLoreSuggestions,
         // Constants
         LITERARY_WORKS, CHANGELOG_ENTRIES,
     };

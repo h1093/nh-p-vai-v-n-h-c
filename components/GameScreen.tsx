@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LorebookSuggestion, CharacterData } from '../types';
+import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, CharacterData } from '../types';
 import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
-import LorebookSuggestions from './LorebookSuggestions';
 import CharacterPanel from './CharacterPanel';
 
 interface GameScreenProps {
@@ -34,10 +33,6 @@ interface GameScreenProps {
   onChat: (npcName: string) => void;
   onGiveGift: (npcName: string, item: Item) => void;
   suggestedActions: string[];
-  lorebookSuggestions: LorebookSuggestion[];
-  onAcceptLoreSuggestion: (suggestion: LorebookSuggestion) => void;
-  onDismissLoreSuggestion: (suggestion: LorebookSuggestion) => void;
-  onDismissAllLoreSuggestions: () => void;
 }
 
 const GameScreen = (props: GameScreenProps) => {
@@ -45,8 +40,7 @@ const GameScreen = (props: GameScreenProps) => {
       history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, character,
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
-      onChat, onGiveGift, suggestedActions, lorebookSuggestions, onAcceptLoreSuggestion,
-      onDismissLoreSuggestion, onDismissAllLoreSuggestions
+      onChat, onGiveGift, suggestedActions
   } = props;
 
   const [input, setInput] = useState('');
@@ -286,12 +280,6 @@ const GameScreen = (props: GameScreenProps) => {
     </div>
 
     <div className="flex-shrink-0 p-4 bg-gray-800 border-t border-gray-700 rounded-b-xl">
-      <LorebookSuggestions
-        suggestions={lorebookSuggestions}
-        onAccept={onAcceptLoreSuggestion}
-        onDismiss={onDismissLoreSuggestion}
-        onDismissAll={onDismissAllLoreSuggestions}
-      />
       {!loading && !editingMessage && suggestedActions.length > 0 && (
         <div className="mb-4 border-b border-gray-700 pb-4 animate-fade-in">
             <div className="flex justify-center items-center mb-3 relative">

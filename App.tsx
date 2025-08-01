@@ -39,7 +39,6 @@ const App = () => {
     suggestedActions,
     savedGames,
     savedCharacters,
-    lorebookSuggestions,
     setIsLorebookOpen,
     setIsChangelogOpen,
     handleApiKeySubmit,
@@ -71,9 +70,6 @@ const App = () => {
     handleExportGame,
     handleImportGame,
     handleDeleteCharacter,
-    handleAcceptLoreSuggestion,
-    handleDismissLoreSuggestion,
-    handleDismissAllLoreSuggestions,
     LITERARY_WORKS,
     CHANGELOG_ENTRIES,
   } = useGameLogic();
@@ -156,10 +152,6 @@ const App = () => {
             onChat={handleChatWithCompanion}
             onGiveGift={handleGiveGiftToCompanion}
             suggestedActions={suggestedActions}
-            lorebookSuggestions={lorebookSuggestions}
-            onAcceptLoreSuggestion={handleAcceptLoreSuggestion}
-            onDismissLoreSuggestion={handleDismissLoreSuggestion}
-            onDismissAllLoreSuggestions={handleDismissAllLoreSuggestions}
           />
         );
       case GameStatus.Error:

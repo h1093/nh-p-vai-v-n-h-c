@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { GEMINI_MODEL, getSystemInstructionWithContext } from "../constants";
-import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, LorebookSuggestion, HistoryMessage } from "../types";
+import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, HistoryMessage } from "../types";
 
 export interface StorySegmentResult {
   narrative: string;
@@ -209,63 +209,6 @@ export async function generateStorySegment(
         suggestedActions,
         worldStateChanges: worldJson
     };
-}
-
-const lorebookSuggestionSchema = {
-    type: Type.OBJECT,
-    properties: {
-        suggestions: {
-            type: Type.ARRAY,
-            description: "Danh sách các mục sổ tay được đề xuất.",
-            items: {
-                type: Type.OBJECT,
-                properties: {
-                    key: { type: Type.STRING, description: "Tên của thực thể (nhân vật, địa điểm, vật phẩm). Phải là danh từ riêng hoặc một khái niệm độc nhất." },
-                    value: { type: Type.STRING, description: "Mô tả chi tiết, khách quan về thực thể đó." },
-                    reason: { type: Type.STRING, description: "Lý do tại sao mục này nên được thêm vào sổ tay, dựa trên đoạn văn bản." }
-                },
-                required: ["key", "value", "reason"]
-            }
-        }
-    },
-    required: ["suggestions"]
-};
-
-export async function generateLorebookSuggestions(
-    ai: GoogleGenAI,
-    narrativeText: string,
-    existingLoreKeys: string[]
-): Promise<LorebookSuggestion[]> {
-    const systemInstruction = `Bạn là một AI trợ lý biên tập, giúp người chơi xây dựng một "sổ tay" (lorebook) để theo dõi các chi tiết quan trọng trong câu chuyện nhập vai.
-Nhiệm vụ của bạn là đọc đoạn văn bản tường thuật và trích xuất các thực thể (nhân vật, địa điểm, vật phẩm quan trọng, khái niệm mới) chưa có trong sổ tay.
-
-QUY TẮC:
-1. Chỉ đề xuất các thực thể MỚI. So sánh với danh sách các khóa đã có và loại bỏ bất kỳ đề xuất nào đã tồn tại.
-2. 'key' phải là một danh từ riêng hoặc một khái niệm cụ thể (ví dụ: "Lão Hạc", "Làng Vũ Đại", "Cái lò gạch cũ").
-3. 'value' phải là một mô tả khách quan, dựa trên thông tin trong văn bản.
-4. 'reason' giải thích ngắn gọn tại sao thực thể này quan trọng và đáng để ghi nhớ.
-5. Nếu không có thực thể mới nào đáng chú ý, hãy trả về một mảng rỗng trong trường 'suggestions'.
-
-Các khóa đã có trong sổ tay (Không đề xuất lại): ${existingLoreKeys.join(', ') || "Chưa có"}
-`;
-
-    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
-        model: GEMINI_MODEL,
-        contents: `Hãy phân tích đoạn văn sau và đề xuất các mục cho sổ tay:\n\n${narrativeText}`,
-        config: {
-            systemInstruction,
-            responseMimeType: "application/json",
-            responseSchema: lorebookSuggestionSchema
-        }
-    }));
-    
-    try {
-        const json = JSON.parse(response.text.trim());
-        return (json.suggestions || []) as LorebookSuggestion[];
-    } catch (e) {
-        console.error("Lỗi phân tích JSON từ Lorebook Suggestion AI:", response.text, e);
-        return []; // Return empty on error to not break the game
-    }
 }
 
 const summarySchema = {
