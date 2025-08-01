@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { GEMINI_MODEL, getSystemInstructionWithContext } from "../constants";
 import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, LorebookSuggestion, HistoryMessage } from "../types";
 
@@ -129,7 +129,7 @@ export async function generateStorySegment(
     // 1. World AI
     setActiveAI('World');
     const worldSystemInstruction = getSystemInstructionWithContext(work.worldSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, turnSummary);
-    const worldResponse = await withRetry(() => ai.models.generateContent({
+    const worldResponse: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: turnSummary,
         config: { systemInstruction: worldSystemInstruction, responseMimeType: "application/json", responseSchema: worldSchema }
@@ -147,7 +147,7 @@ export async function generateStorySegment(
     setActiveAI('Storyteller');
     const storytellerPrompt = `Hành động của người chơi: "${prompt}".\nCập nhật thế giới ngoài màn hình: "${worldJson.offScreenWorldUpdate || 'Không có.'}"`;
     const storytellerSystemInstruction = getSystemInstructionWithContext(work.storytellerSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, storytellerPrompt);
-    const storytellerResponse = await withRetry(() => ai.models.generateContent({
+    const storytellerResponse: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: storytellerPrompt,
         config: { systemInstruction: storytellerSystemInstruction, responseMimeType: "application/json", responseSchema: storytellerSchema }
@@ -181,7 +181,7 @@ export async function generateStorySegment(
 
                 const characterPrompt = `Trong bối cảnh sau đây, hãy viết lời thoại cho nhân vật ${npcName}:\n\n${narrative}`;
                 const characterSystemInstruction = getSystemInstructionWithContext(work.characterSystemInstruction, character, lorebook, inventory, equipment, spouse, dating, pregnancy, gameTime, isNsfwEnabled, characterPrompt);
-                const characterResponse = await withRetry(() => ai.models.generateContent({
+                const characterResponse: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
                     model: GEMINI_MODEL,
                     contents: characterPrompt,
                     config: { systemInstruction: characterSystemInstruction, responseMimeType: "application/json", responseSchema: characterSchema }
@@ -249,7 +249,7 @@ QUY TẮC:
 Các khóa đã có trong sổ tay (Không đề xuất lại): ${existingLoreKeys.join(', ') || "Chưa có"}
 `;
 
-    const response = await withRetry(() => ai.models.generateContent({
+    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: `Hãy phân tích đoạn văn sau và đề xuất các mục cho sổ tay:\n\n${narrativeText}`,
         config: {
@@ -294,7 +294,7 @@ export async function generateSummary(
     
     const prompt = `Đây là các sự kiện vừa xảy ra:\nNhân vật của tôi: ${character.name}\n${formattedHistory}\n\nHãy tóm tắt lại những sự kiện trên từ góc nhìn của tôi.`;
 
-    const response = await withRetry(() => ai.models.generateContent({
+    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
         model: GEMINI_MODEL,
         contents: prompt,
         config: {

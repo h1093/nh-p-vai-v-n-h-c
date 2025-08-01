@@ -130,6 +130,7 @@ const App = () => {
       case GameStatus.Playing:
         return selectedWork && character && (
           <GameScreen
+            character={character}
             history={history}
             onUserInput={handleUserInput}
             loading={isLoading}

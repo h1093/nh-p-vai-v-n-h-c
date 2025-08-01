@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LorebookSuggestion } from '../types';
+import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LorebookSuggestion, CharacterData } from '../types';
 import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
 import LorebookSuggestions from './LorebookSuggestions';
+import CharacterPanel from './CharacterPanel';
 
 interface GameScreenProps {
   history: HistoryMessage[];
@@ -17,6 +18,7 @@ interface GameScreenProps {
   onUpdateLastNarrative: (messageId: string, newContent: string) => void;
   onRegenerate: () => void;
   canRegenerate: boolean;
+  character: CharacterData;
   affinity: AffinityData;
   inventory: Item[];
   equipment: Equipment;
@@ -40,7 +42,7 @@ interface GameScreenProps {
 
 const GameScreen = (props: GameScreenProps) => {
   const { 
-      history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, 
+      history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, character,
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
       onChat, onGiveGift, suggestedActions, lorebookSuggestions, onAcceptLoreSuggestion,
@@ -52,7 +54,7 @@ const GameScreen = (props: GameScreenProps) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const [activePanel, setActivePanel] = useState<'affinity' | 'inventory' | 'companions' | null>(null);
+  const [activePanel, setActivePanel] = useState<'character' | 'affinity' | 'inventory' | 'companions' | null>(null);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
 
   const lastModelMessage = history.slice().reverse().find(m => m.role === 'model');
@@ -137,7 +139,7 @@ const GameScreen = (props: GameScreenProps) => {
     }
   };
 
-  const togglePanel = (panel: 'affinity' | 'inventory' | 'companions') => {
+  const togglePanel = (panel: 'character' | 'affinity' | 'inventory' | 'companions') => {
       setActivePanel(activePanel === panel ? null : panel);
   };
   
@@ -164,6 +166,16 @@ const GameScreen = (props: GameScreenProps) => {
             <h1 className="text-lg md:text-xl font-serif-display text-gray-100 font-bold truncate hidden md:block" title={workTitle}>{workTitle}</h1>
         </div>
         <div className="flex-shrink-0 flex items-center gap-1 md:gap-2">
+           <button
+              onClick={() => togglePanel('character')}
+              className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'character' ? 'bg-purple-900/50 border-purple-700 text-purple-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
+              title="Hồ sơ nhân vật"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              </svg>
+              <span className="hidden sm:inline">Nhân vật</span>
+          </button>
            <button
               onClick={() => togglePanel('affinity')}
               className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'affinity' ? 'bg-rose-900/50 border-rose-700 text-rose-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
@@ -209,6 +221,7 @@ const GameScreen = (props: GameScreenProps) => {
     </div>
      {activePanel && (
         <div className="flex-shrink-0 border-b border-gray-700 bg-gray-800 animate-fade-in">
+            {activePanel === 'character' && <CharacterPanel character={character} />}
             {activePanel === 'affinity' && <AffinityTracker affinityData={affinity} />}
             {activePanel === 'inventory' && <InventoryPanel inventory={inventory} equipment={equipment} onEquip={onEquipItem} onUnequip={onUnequipItem} />}
             {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} inventory={inventory} dating={dating} spouse={spouse} onConfess={onConfess} onPropose={onPropose} onChat={onChat} onGiveGift={onGiveGift} />}
