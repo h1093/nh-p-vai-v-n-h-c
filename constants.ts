@@ -1,5 +1,3 @@
-
-
 import { Work, CharacterData, Item, Equipment, LorebookEntry } from './types';
 
 export const GEMINI_MODEL = 'gemini-2.5-flash';
@@ -78,7 +76,7 @@ export const getSystemInstructionWithContext = (
     }
     
     if (lorebook.length > 0) {
-        context += `Sổ tay: ${lorebook.map(e => `${e.key}: ${e.value}`).join('; ')}\n`;
+        context += `Sổ tay: ${lorebook.map(e => `${e.key}: ${e.value} (id: ${e.id})`).join('; ')}\n`;
     }
 
     if(spouse) context += `Tôi đã kết hôn với ${spouse}.\n`;
