@@ -40,6 +40,7 @@ const App = () => {
     savedGames,
     savedCharacters,
     goals,
+    isGeneratingBackground,
     setIsLorebookOpen,
     setIsChangelogOpen,
     handleApiKeySubmit,
@@ -74,6 +75,7 @@ const App = () => {
     handleExportGame,
     handleImportGame,
     handleDeleteCharacter,
+    handleGenerateBackground,
     LITERARY_WORKS,
     CHANGELOG_ENTRIES,
   } = useGameLogic();
@@ -123,6 +125,8 @@ const App = () => {
             onBack={resetToModeSelection}
             savedCharacters={savedCharacters}
             onDeleteCharacter={handleDeleteCharacter}
+            onGenerateBackground={handleGenerateBackground}
+            isGeneratingBackground={isGeneratingBackground}
           />
         );
       case GameStatus.StoryStarting:

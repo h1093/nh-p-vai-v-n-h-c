@@ -8,7 +8,7 @@ import {
 import {
     LITERARY_WORKS, createCustomLiteraryWork, API_KEY_STORAGE_KEY, SAVE_GAME_KEY, CHARACTERS_SAVE_KEY, CHANGELOG_ENTRIES, SUMMARY_TURN_THRESHOLD
 } from '../constants';
-import { generateStorySegment, StorySegmentResult, generateSummary } from '../services/geminiService';
+import { generateStorySegment, StorySegmentResult, generateSummary, generateBackgroundSuggestions } from '../services/geminiService';
 
 const initialEquipment: Equipment = { weapon: null, armor: null };
 const CURRENT_SAVE_VERSION = "v14";
@@ -191,6 +191,7 @@ export const useGameLogic = () => {
     // --- UI State ---
     const [isLorebookOpen, setIsLorebookOpen] = useState(false);
     const [isChangelogOpen, setIsChangelogOpen] = useState(false);
+    const [isGeneratingBackground, setIsGeneratingBackground] = useState(false);
 
     // --- EFFECT HOOKS for Initialization & Persistence ---
 
@@ -666,6 +667,25 @@ export const useGameLogic = () => {
         }
     }, []);
 
+    const handleGenerateBackground = useCallback(async (partialCharacter: Partial<Character>): Promise<string[] | undefined> => {
+        if (!ai || !selectedWork || isGeneratingBackground) {
+            return;
+        }
+        setIsGeneratingBackground(true);
+        setError(null);
+        try {
+            const suggestions = await generateBackgroundSuggestions(ai, selectedWork, partialCharacter);
+            return suggestions;
+        } catch (e) {
+            const errorMessage = e instanceof Error ? e.message : "Đã xảy ra lỗi khi lấy gợi ý.";
+            console.error("Lỗi khi tạo gợi ý hoàn cảnh:", e);
+            setError(errorMessage);
+            return undefined;
+        } finally {
+            setIsGeneratingBackground(false);
+        }
+    }, [ai, selectedWork, isGeneratingBackground]);
+
     // --- IN-GAME ACTION HANDLERS ---
     const handleUserInput = useCallback(async (userInput: string) => {
         setSuggestedActions([]);
@@ -761,7 +781,7 @@ export const useGameLogic = () => {
     return {
         status, ai, isLoading, activeAI, selectedWork, character, history, lastTurnInfo, error, isNsfwEnabled,
         lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, offScreenWorldUpdate, gameTime, isLorebookOpen, isChangelogOpen,
-        suggestedActions, savedGames, savedCharacters, goals,
+        suggestedActions, savedGames, savedCharacters, goals, isGeneratingBackground,
         // Setters / Handlers
         setIsLorebookOpen, setIsChangelogOpen,
         handleApiKeySubmit, handleChangeApiKey, handleSelectWork, handleStartWorldCreation, handleCreateCustomWork,
@@ -771,6 +791,7 @@ export const useGameLogic = () => {
         handleGiveGiftToCompanion, handleAddLoreEntry, handleUpdateLoreEntry, handleDeleteLoreEntry,
         handleAddGoal, handleToggleGoal, handleDeleteGoal,
         handleLoadGame, handleDeleteGame, handleExportGame, handleImportGame, handleDeleteCharacter,
+        handleGenerateBackground,
         // Constants
         LITERARY_WORKS, CHANGELOG_ENTRIES,
     };

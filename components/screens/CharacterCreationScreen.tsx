@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Work, Character, CharacterData } from '../../types';
+import ChoiceButton from '../ChoiceButton';
 
 interface CharacterCreationScreenProps {
     work: Work;
@@ -7,14 +8,17 @@ interface CharacterCreationScreenProps {
     onBack: () => void;
     savedCharacters: Character[];
     onDeleteCharacter: (id: string) => void;
+    onGenerateBackground: (character: Partial<Character>) => Promise<string[] | undefined>;
+    isGeneratingBackground: boolean;
 }
 
-const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDeleteCharacter }: CharacterCreationScreenProps) => {
+const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDeleteCharacter, onGenerateBackground, isGeneratingBackground }: CharacterCreationScreenProps) => {
     const [character, setCharacter] = useState<Partial<Character>>({ name: '', gender: 'Nam', appearance: '', personality: '', background: '' });
     const [selectedTraits, setSelectedTraits] = useState<string[]>([]);
     const [customTraits, setCustomTraits] = useState('');
     const [shouldSaveCharacter, setShouldSaveCharacter] = useState(true);
     const [selectedSavedCharId, setSelectedSavedCharId] = useState('');
+    const [backgroundSuggestions, setBackgroundSuggestions] = useState<string[]>([]);
 
     const personalityTraits = [
         'Hiền lành', 'Ít nói', 'Quật cường', 'Dũng cảm', 'Gian xảo',
@@ -78,6 +82,21 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
         if (!isFormValid) return;
         onSubmit(character, shouldSaveCharacter);
     };
+
+    const handleSuggestClick = async () => {
+        if (isGeneratingBackground) return;
+        const suggestions = await onGenerateBackground(character);
+        if (suggestions) {
+            setBackgroundSuggestions(suggestions);
+        }
+    };
+
+    const handleUseSuggestion = (suggestion: string) => {
+        setCharacter(c => ({ ...c, background: suggestion }));
+        setBackgroundSuggestions([]); // Clear suggestions after use
+    };
+
+    const isSuggestButtonDisabled = isGeneratingBackground || !character.name?.trim() || !character.personality?.trim();
     
     return (
         <div className="max-w-2xl mx-auto p-8 bg-gray-800 rounded-xl shadow-2xl shadow-black/20 border border-gray-700">
@@ -168,9 +187,38 @@ const CharacterCreationScreen = ({ work, onSubmit, onBack, savedCharacters, onDe
                         />
                     </div>
                     <div>
-                        <label htmlFor="background" className="block text-sm font-bold text-gray-300 mb-2">Hoàn cảnh</label>
-                        <textarea id="background" name="background" value={character.background || ''} onChange={handleChange} rows={4} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Một thầy lang trẻ từ nơi khác đến..." required />
+                        <div className="flex justify-between items-center mb-2">
+                            <label htmlFor="background" className="block text-sm font-bold text-gray-300">Hoàn cảnh</label>
+                            <button
+                                type="button"
+                                onClick={handleSuggestClick}
+                                disabled={isSuggestButtonDisabled}
+                                className="text-sm font-semibold text-amber-400 hover:text-amber-300 disabled:text-gray-500 disabled:cursor-not-allowed transition-colors"
+                                title={isSuggestButtonDisabled ? "Nhập tên và tính cách để nhận gợi ý" : "Nhận gợi ý từ AI"}
+                            >
+                                {isGeneratingBackground ? 'Đang suy nghĩ...' : 'Gợi ý từ AI ✨'}
+                            </button>
+                        </div>
+                        <textarea id="background" name="background" value={character.background || ''} onChange={handleChange} rows={4} className="w-full px-4 py-2 border border-gray-600 bg-gray-700 text-gray-200 rounded-lg focus:ring-amber-500 focus:border-amber-500" placeholder="Ví dụ: Một thầy lang trẻ từ nơi khác đến... hoặc để AI gợi ý cho bạn." required />
                     </div>
+                    
+                    {backgroundSuggestions.length > 0 && (
+                        <div className="mt-4 space-y-3 animate-fade-in">
+                            <h4 className="text-sm font-bold text-gray-300">Gợi ý từ AI:</h4>
+                            <div className="border-l-2 border-amber-600 pl-4 space-y-4">
+                                {backgroundSuggestions.map((suggestion, index) => (
+                                    <div key={index} className="bg-gray-700/70 p-4 rounded-lg border border-gray-600">
+                                        <p className="text-gray-200 whitespace-pre-wrap">{suggestion}</p>
+                                        <div className="text-right mt-3">
+                                            <ChoiceButton onClick={() => handleUseSuggestion(suggestion)} size="sm" variant="secondary">
+                                                Sử dụng gợi ý này
+                                            </ChoiceButton>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
                 
                 <div className="flex items-center space-x-3 pt-4">

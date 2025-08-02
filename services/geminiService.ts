@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
 import { GEMINI_MODEL, getSystemInstructionWithContext } from "../constants";
-import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, HistoryMessage } from "../types";
+import { LorebookEntry, AffinityUpdate, Item, Equipment, ItemUpdate, Work, CharacterData, AITypeKey, HistoryMessage, Character } from "../types";
 
 export interface StorySegmentResult {
   narrative: string;
@@ -253,5 +253,57 @@ export async function generateSummary(
     } catch (e) {
         console.error("Lỗi phân tích JSON từ Summary AI:", response.text, e);
         return response.text.trim();
+    }
+}
+
+const backgroundSuggestionsSchema = {
+    type: Type.OBJECT,
+    properties: {
+        suggestions: {
+            type: Type.ARRAY,
+            description: "Một mảng chứa đúng 3 chuỗi. Mỗi chuỗi là một phương án hoàn cảnh chi tiết, giàu hình ảnh, và phù hợp với văn phong của tác phẩm.",
+            items: { type: Type.STRING }
+        }
+    },
+    required: ["suggestions"]
+};
+
+
+export async function generateBackgroundSuggestions(
+    ai: GoogleGenAI,
+    work: Work,
+    character: Partial<Character>
+): Promise<string[]> {
+    const systemInstruction = `Bạn là một nhà văn sáng tạo, một chuyên gia về văn học. Nhiệm vụ của bạn là giúp người dùng tạo ra một hoàn cảnh (tiểu sử, bối cảnh) hấp dẫn cho nhân vật của họ trong thế giới của tác phẩm '${work.title}'. Dựa trên những thông tin ngắn gọn người dùng cung cấp (tên, tính cách, vài ý tưởng ban đầu về hoàn cảnh), hãy viết 3 phương án hoàn cảnh chi tiết, giàu hình ảnh và phù hợp với văn phong của tác phẩm. Mỗi phương án phải là một đoạn văn hoàn chỉnh. Chỉ trả về đối tượng JSON theo schema.`;
+
+    const prompt = `Tác phẩm: ${work.title} của ${work.author}
+Nhân vật của tôi:
+- Tên: ${character.name || '(chưa có tên)'}
+- Giới tính: ${character.gender || '(chưa rõ)'}
+- Tính cách: ${character.personality || '(chưa rõ)'}
+- Ý tưởng ban đầu về hoàn cảnh: "${character.background || 'Chưa có, hãy sáng tạo tự do.'}"
+
+Hãy viết 3 phương án hoàn cảnh chi tiết cho nhân vật này.`;
+
+    const response: GenerateContentResponse = await withRetry(() => ai.models.generateContent({
+        model: GEMINI_MODEL,
+        contents: prompt,
+        config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: backgroundSuggestionsSchema,
+        }
+    }));
+    
+    try {
+        const json = JSON.parse(response.text.trim());
+        return json.suggestions || [];
+    } catch (e) {
+        console.error("Lỗi phân tích JSON từ AI gợi ý hoàn cảnh:", response.text, e);
+        const matches = response.text.match(/"([^"]*)"/g);
+        if (matches) {
+            return matches.map(m => m.substring(1, m.length - 1));
+        }
+        return [];
     }
 }
