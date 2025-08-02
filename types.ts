@@ -64,6 +64,12 @@ export interface LorebookEntry {
     value: string;
 }
 
+export interface Goal {
+    id: string;
+    text: string;
+    completed: boolean;
+}
+
 export interface AffinityUpdate {
     npcName: string;
     change: number;
@@ -109,6 +115,7 @@ export interface GameState {
     inventory: Item[];
     equipment: Equipment;
     companions: string[];
+    goals: Goal[];
     dating: string | null;
     spouse: string | null;
     pregnancy: { partnerName: string; conceptionTime: number; } | null;

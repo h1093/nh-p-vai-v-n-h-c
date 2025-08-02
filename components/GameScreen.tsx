@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, CharacterData } from '../types';
+import { HistoryMessage, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, CharacterData, Goal } from '../types';
 import AffinityTracker from './AffinityTracker';
 import InventoryPanel from './InventoryPanel';
 import CompanionPanel from './CompanionPanel';
 import AIStatusIndicator from './AIStatusIndicator';
 import CharacterPanel from './CharacterPanel';
+import GoalsPanel from './GoalsPanel';
 
 interface GameScreenProps {
   history: HistoryMessage[];
@@ -13,6 +14,7 @@ interface GameScreenProps {
   activeAI: AITypeKey | null;
   onSaveAndExit: () => void;
   onOpenLorebook: () => void;
+  isLorebookOpen: boolean;
   workTitle: string;
   onUpdateLastNarrative: (messageId: string, newContent: string) => void;
   onRegenerate: () => void;
@@ -33,23 +35,31 @@ interface GameScreenProps {
   onChat: (npcName: string) => void;
   onGiveGift: (npcName: string, item: Item) => void;
   suggestedActions: string[];
+  goals: Goal[];
+  onAddGoal: (text: string) => void;
+  onToggleGoal: (id: string) => void;
+  onDeleteGoal: (id: string) => void;
 }
+
+type PanelType = 'character' | 'affinity' | 'inventory' | 'companions' | 'goals';
 
 const GameScreen = (props: GameScreenProps) => {
   const { 
-      history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, workTitle, character,
+      history, onUserInput, loading, activeAI, onSaveAndExit, onOpenLorebook, isLorebookOpen, workTitle, character,
       onUpdateLastNarrative, onRegenerate, canRegenerate, affinity, inventory, equipment,
       companions, onEquipItem, onUnequipItem, gameTime, dating, spouse, pregnancy, onConfess, onPropose,
-      onChat, onGiveGift, suggestedActions
+      onChat, onGiveGift, suggestedActions, goals, onAddGoal, onToggleGoal, onDeleteGoal
   } = props;
 
   const [input, setInput] = useState('');
   const [editingMessage, setEditingMessage] = useState<{ id: string, content: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const [activePanel, setActivePanel] = useState<'character' | 'affinity' | 'inventory' | 'companions' | null>(null);
+  const [activePanel, setActivePanel] = useState<PanelType | null>(null);
   const [isSuggestionsVisible, setIsSuggestionsVisible] = useState(true);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const lastModelMessage = history.slice().reverse().find(m => m.role === 'model');
 
@@ -85,6 +95,18 @@ const GameScreen = (props: GameScreenProps) => {
       }
       return `Tuần ${totalWeeks}`;
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(scrollToBottom, [history, loading]);
   useEffect(autoGrowTextarea, [input]);
@@ -133,10 +155,24 @@ const GameScreen = (props: GameScreenProps) => {
     }
   };
 
-  const togglePanel = (panel: 'character' | 'affinity' | 'inventory' | 'companions') => {
+  const togglePanel = (panel: PanelType) => {
       setActivePanel(activePanel === panel ? null : panel);
   };
+
+  const handleMenuAction = (action: () => void) => {
+    action();
+    setIsMenuOpen(false);
+  };
   
+  const menuItems: { id: PanelType | 'lorebook', label: string, icon: JSX.Element, action: () => void }[] = [
+    { id: 'character', label: 'Nhân vật', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>, action: () => togglePanel('character') },
+    { id: 'affinity', label: 'Tình cảm', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>, action: () => togglePanel('affinity') },
+    { id: 'companions', label: 'Đồng đội', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0115 8h-1a4 4 0 00-3.96 3.18l-1.07 3.22A5 5 0 015 8H4a5 5 0 014.5-5.92V2a1 1 0 112 0v.08A5 5 0 0115 8v.28a1 1 0 01-2 0V8a3 3 0 00-3-3H8a3 3 0 00-3 3v1c0 1.13.27 2.18.75 3.12L5.22 15.3A7 7 0 0012 21.054c.003-.001.006-.002.009-.003l.022-.009a1 1 0 01.428-1.935l-1.42-2.13z" /></svg>, action: () => togglePanel('companions') },
+    { id: 'inventory', label: 'Túi đồ', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clipRule="evenodd" /></svg>, action: () => togglePanel('inventory') },
+    { id: 'goals', label: 'Mục tiêu', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm0-2a6 6 0 100-12 6 6 0 000 12zm0-4a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" /></svg>, action: () => togglePanel('goals') },
+    { id: 'lorebook', label: 'Sổ tay', icon: <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" /></svg>, action: onOpenLorebook },
+  ];
+
   return (
   <div className="w-full max-w-4xl mx-auto flex flex-col h-[90vh] bg-gray-900 rounded-xl shadow-2xl shadow-black/20 border border-gray-700">
      <div className="flex-shrink-0 flex justify-between items-center p-4 border-b border-gray-700 bg-gray-800 rounded-t-xl gap-2 md:gap-4">
@@ -159,49 +195,42 @@ const GameScreen = (props: GameScreenProps) => {
             )}
             <h1 className="text-lg md:text-xl font-serif-display text-gray-100 font-bold truncate hidden md:block" title={workTitle}>{workTitle}</h1>
         </div>
-        <div className="flex-shrink-0 flex items-center gap-1 md:gap-2">
-           <button
-              onClick={() => togglePanel('character')}
-              className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'character' ? 'bg-purple-900/50 border-purple-700 text-purple-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
-              title="Hồ sơ nhân vật"
+        <div className="flex-shrink-0 flex items-center gap-2 md:gap-3">
+          <div className="relative" ref={menuRef}>
+            <button
+              onClick={() => setIsMenuOpen(prev => !prev)}
+              className="flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600 transition-colors"
+              title="Bảng điều khiển"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
-              <span className="hidden sm:inline">Nhân vật</span>
-          </button>
-           <button
-              onClick={() => togglePanel('affinity')}
-              className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'affinity' ? 'bg-rose-900/50 border-rose-700 text-rose-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
-              title="Tình cảm"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" /></svg>
-              <span className="hidden sm:inline">Tình cảm</span>
-          </button>
-           <button
-              onClick={() => togglePanel('companions')}
-              className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'companions' ? 'bg-sky-900/50 border-sky-700 text-sky-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
-              title="Đồng đội"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0115 8h-1a4 4 0 00-3.96 3.18l-1.07 3.22A5 5 0 015 8H4a5 5 0 014.5-5.92V2a1 1 0 112 0v.08A5 5 0 0115 8v.28a1 1 0 01-2 0V8a3 3 0 00-3-3H8a3 3 0 00-3 3v1c0 1.13.27 2.18.75 3.12L5.22 15.3A7 7 0 0012 21.054c.003-.001.006-.002.009-.003l.022-.009a1 1 0 01.428-1.935l-1.42-2.13z" /></svg>
-              <span className="hidden sm:inline">Đồng đội</span>
-          </button>
-          <button
-              onClick={() => togglePanel('inventory')}
-              className={`flex items-center gap-2 font-semibold py-2 px-3 rounded-lg shadow-sm border text-sm transition-colors ${activePanel === 'inventory' ? 'bg-yellow-900/50 border-yellow-700 text-yellow-300' : 'bg-gray-700 border-gray-600 text-gray-200 hover:bg-gray-600'}`}
-              title="Túi đồ"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4z" clipRule="evenodd" /></svg>
-              <span className="hidden sm:inline">Túi đồ</span>
-          </button>
-          <button
-              onClick={onOpenLorebook}
-              className="relative flex items-center gap-2 bg-gray-700 text-gray-200 font-semibold py-2 px-3 rounded-lg shadow-sm border border-gray-600 hover:bg-gray-600 transition-colors text-sm"
-              title="Mở sổ tay"
-          >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" /></svg>
-              <span className="hidden sm:inline">Sổ tay</span>
-          </button>
+              <span className="hidden sm:inline">Bảng điều khiển</span>
+            </button>
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-gray-800 rounded-lg shadow-lg border border-gray-700 z-20 animate-fade-in">
+                <ul className="py-1">
+                  {menuItems.map(item => {
+                    const isActive = activePanel === item.id || (item.id === 'lorebook' && isLorebookOpen);
+                    return (
+                      <li key={item.id}>
+                        <button
+                          onClick={() => handleMenuAction(item.action)}
+                          className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                            isActive ? 'bg-amber-800/80 text-white' : 'text-gray-200 hover:bg-gray-700/70'
+                          }`}
+                        >
+                          <span className={`${isActive ? 'text-amber-300' : 'text-gray-400'}`}>{item.icon}</span>
+                          <span className="font-semibold">{item.label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
+          </div>
+          
           <button
               onClick={onSaveAndExit}
               className="bg-gray-600 text-white font-bold py-2 px-3 rounded-lg shadow hover:bg-gray-500 transition-colors text-sm flex items-center gap-2"
@@ -219,6 +248,7 @@ const GameScreen = (props: GameScreenProps) => {
             {activePanel === 'affinity' && <AffinityTracker affinityData={affinity} />}
             {activePanel === 'inventory' && <InventoryPanel inventory={inventory} equipment={equipment} onEquip={onEquipItem} onUnequip={onUnequipItem} />}
             {activePanel === 'companions' && <CompanionPanel companions={companions} affinityData={affinity} inventory={inventory} dating={dating} spouse={spouse} onConfess={onConfess} onPropose={onPropose} onChat={onChat} onGiveGift={onGiveGift} />}
+            {activePanel === 'goals' && <GoalsPanel goals={goals} onAdd={onAddGoal} onToggle={onToggleGoal} onDelete={onDeleteGoal} />}
         </div>
     )}
     <div className="flex-grow p-4 md:p-6 overflow-y-auto bg-gray-900 space-y-6">

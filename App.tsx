@@ -39,6 +39,7 @@ const App = () => {
     suggestedActions,
     savedGames,
     savedCharacters,
+    goals,
     setIsLorebookOpen,
     setIsChangelogOpen,
     handleApiKeySubmit,
@@ -65,6 +66,9 @@ const App = () => {
     handleAddLoreEntry,
     handleUpdateLoreEntry,
     handleDeleteLoreEntry,
+    handleAddGoal,
+    handleToggleGoal,
+    handleDeleteGoal,
     handleLoadGame,
     handleDeleteGame,
     handleExportGame,
@@ -133,6 +137,7 @@ const App = () => {
             activeAI={activeAI}
             onSaveAndExit={handleSaveAndExit}
             onOpenLorebook={() => setIsLorebookOpen(true)}
+            isLorebookOpen={isLorebookOpen}
             workTitle={selectedWork.title}
             onUpdateLastNarrative={handleUpdateLastNarrative}
             onRegenerate={handleRegenerate}
@@ -152,6 +157,10 @@ const App = () => {
             onChat={handleChatWithCompanion}
             onGiveGift={handleGiveGiftToCompanion}
             suggestedActions={suggestedActions}
+            goals={goals}
+            onAddGoal={handleAddGoal}
+            onToggleGoal={handleToggleGoal}
+            onDeleteGoal={handleDeleteGoal}
           />
         );
       case GameStatus.Error:

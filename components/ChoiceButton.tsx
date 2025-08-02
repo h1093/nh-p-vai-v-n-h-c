@@ -1,16 +1,17 @@
 import React from 'react';
 
 interface ChoiceButtonProps {
-  onClick: () => void;
+  onClick?: () => void;
   children: React.ReactNode;
   className?: string;
   disabled?: boolean;
   variant?: 'primary' | 'secondary' | 'danger';
   size?: 'sm' | 'md';
   title?: string;
+  type?: 'button' | 'submit' | 'reset';
 }
 
-const ChoiceButton = ({ onClick, children, className = '', disabled = false, variant = 'primary', size = 'md', title }: ChoiceButtonProps) => {
+const ChoiceButton = ({ onClick = () => {}, children, className = '', disabled = false, variant = 'primary', size = 'md', title, type = 'button' }: ChoiceButtonProps) => {
   const baseClasses = 'font-semibold rounded-md shadow-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800';
   
   const variantClasses = {
@@ -28,6 +29,7 @@ const ChoiceButton = ({ onClick, children, className = '', disabled = false, var
     <button
       onClick={onClick}
       disabled={disabled}
+      type={type}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       title={title}
     >

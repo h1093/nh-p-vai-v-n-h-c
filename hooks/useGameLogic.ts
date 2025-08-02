@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 
 import {
     GameStatus, Work, CharacterData, HistoryMessage, LorebookEntry, AffinityData, Item, Equipment, EquipmentSlot, AITypeKey, LastTurnInfo,
-    Character, GameState, SaveSlot
+    Character, GameState, SaveSlot, Goal
 } from '../types';
 import {
     LITERARY_WORKS, createCustomLiteraryWork, API_KEY_STORAGE_KEY, SAVE_GAME_KEY, CHARACTERS_SAVE_KEY, CHANGELOG_ENTRIES, SUMMARY_TURN_THRESHOLD
@@ -117,6 +117,7 @@ const loadStateFromGameState = (
         setActiveSaveId: React.Dispatch<React.SetStateAction<string | null>>,
         setSuggestedActions: React.Dispatch<React.SetStateAction<string[]>>,
         setTurnCount: React.Dispatch<React.SetStateAction<number>>,
+        setGoals: React.Dispatch<React.SetStateAction<Goal[]>>,
         setStatus: React.Dispatch<React.SetStateAction<keyof typeof GameStatus>>,
     }
 ): Work | null => {
@@ -147,6 +148,7 @@ const loadStateFromGameState = (
     setters.setActiveSaveId(gameState.id);
     setters.setSuggestedActions(gameState.suggestedActions || []);
     setters.setTurnCount(gameState.turnCount || 0);
+    setters.setGoals(gameState.goals || []);
     setters.setStatus(GameStatus.Playing);
 
     return work;
@@ -179,6 +181,7 @@ export const useGameLogic = () => {
     const [dating, setDating] = useState<string | null>(null);
     const [spouse, setSpouse] = useState<string | null>(null);
     const [pregnancy, setPregnancy] = useState<{ partnerName: string; conceptionTime: number; } | null>(null);
+    const [goals, setGoals] = useState<Goal[]>([]);
     const [offScreenWorldUpdate, setOffScreenWorldUpdate] = useState<string | null>(null);
     const [gameTime, setGameTime] = useState(480); // Start at 8:00 AM
     const [suggestedActions, setSuggestedActions] = useState<string[]>([]);
@@ -260,6 +263,7 @@ export const useGameLogic = () => {
         setDating(null);
         setSpouse(null);
         setPregnancy(null);
+        setGoals([]);
         setLastTurnInfo(null);
         setOffScreenWorldUpdate(null);
         setIsNsfwEnabled(false);
@@ -510,7 +514,7 @@ export const useGameLogic = () => {
         const currentGameState: GameState = {
             id: activeSaveId, character, history, lorebook, affinity, inventory, equipment,
             companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled,
-            suggestedActions, turnCount,
+            suggestedActions, turnCount, goals,
             selectedWorkId: selectedWork.id,
             customWorkData: selectedWork.id.startsWith('custom-') ? {
                 title: selectedWork.title, author: selectedWork.author, content: selectedWork.content || ''
@@ -537,7 +541,7 @@ export const useGameLogic = () => {
         });
         
         resetToWorkSelection();
-    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, suggestedActions, turnCount, resetToWorkSelection]);
+    }, [character, selectedWork, activeSaveId, history, lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, gameTime, offScreenWorldUpdate, lastTurnInfo, isNsfwEnabled, suggestedActions, turnCount, goals, resetToWorkSelection]);
 
     const handleLoadGame = useCallback((saveId: string) => {
         const slot = savedGames.find(s => s.id === saveId);
@@ -549,7 +553,8 @@ export const useGameLogic = () => {
             setSelectedWork, setCharacter, setHistory, setLorebook, setAffinity,
             setInventory, setEquipment, setCompanions, setDating, setSpouse,
             setPregnancy, setGameTime, setOffScreenWorldUpdate, setLastTurnInfo,
-            setIsNsfwEnabled, setActiveSaveId, setSuggestedActions, setTurnCount, setStatus
+            setIsNsfwEnabled, setActiveSaveId, setSuggestedActions, setTurnCount, setStatus,
+            setGoals
         });
         
         if (!work) {
@@ -731,11 +736,32 @@ export const useGameLogic = () => {
         setInventory(prev => prev.filter(i => i.id !== item.id));
         handleUserInput(`Tôi lấy ${item.name} từ trong túi đồ của mình và tặng nó cho ${npcName}.`);
     }, [handleUserInput]);
+
+    const handleAddGoal = useCallback((text: string) => {
+        if (text.trim()) {
+            const newGoal: Goal = {
+                id: `goal-${Date.now()}`,
+                text: text.trim(),
+                completed: false,
+            };
+            setGoals(prev => [...prev, newGoal]);
+        }
+    }, []);
+
+    const handleToggleGoal = useCallback((goalId: string) => {
+        setGoals(prev => prev.map(goal => 
+            goal.id === goalId ? { ...goal, completed: !goal.completed } : goal
+        ));
+    }, []);
+
+    const handleDeleteGoal = useCallback((goalId: string) => {
+        setGoals(prev => prev.filter(goal => goal.id !== goalId));
+    }, []);
     
     return {
         status, ai, isLoading, activeAI, selectedWork, character, history, lastTurnInfo, error, isNsfwEnabled,
         lorebook, affinity, inventory, equipment, companions, dating, spouse, pregnancy, offScreenWorldUpdate, gameTime, isLorebookOpen, isChangelogOpen,
-        suggestedActions, savedGames, savedCharacters,
+        suggestedActions, savedGames, savedCharacters, goals,
         // Setters / Handlers
         setIsLorebookOpen, setIsChangelogOpen,
         handleApiKeySubmit, handleChangeApiKey, handleSelectWork, handleStartWorldCreation, handleCreateCustomWork,
@@ -743,6 +769,7 @@ export const useGameLogic = () => {
         setIsNsfwEnabled, handleUserInput, handleSaveAndExit, handleUpdateLastNarrative, handleRegenerate,
         handleEquipItem, handleUnequipItem, handleConfess, handlePropose, handleChatWithCompanion,
         handleGiveGiftToCompanion, handleAddLoreEntry, handleUpdateLoreEntry, handleDeleteLoreEntry,
+        handleAddGoal, handleToggleGoal, handleDeleteGoal,
         handleLoadGame, handleDeleteGame, handleExportGame, handleImportGame, handleDeleteCharacter,
         // Constants
         LITERARY_WORKS, CHANGELOG_ENTRIES,
