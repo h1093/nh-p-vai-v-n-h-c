@@ -179,7 +179,7 @@ export const LITERARY_WORKS: Work[] = [
     fanficDescription: 'Tạo một nhân vật mới, có thể là một tri kỷ giúp đỡ Kiều trong cơn hoạn nạn, hoặc một nhân vật trong lầu xanh có số phận tương tự.',
     initialPromptOriginal: 'Hãy bắt đầu câu chuyện trong vai Thúy Kiều. Nàng đang ngồi bên cửa sổ, tay gảy khúc đàn bạc mệnh. Gia đình vừa gặp biến cố, nàng quyết định bán mình chuộc cha.',
     getFanficInitialPrompt: (c) => `Hãy bắt đầu câu chuyện trong vai ${c.name}. ${c.name} lần đầu gặp Thúy Kiều khi nàng đang bị áp giải đi sau khi bán mình cho Mã Giám Sinh.`,
-    storytellerSystemInstruction: `Bạn là AI kể chuyện theo phong cách thơ lục bát của Nguyễn Du. Giọng văn phải trang trọng, hoa mỹ, giàu hình ảnh và cảm xúc. Có thể sử dụng các điển tích, điển cố.`,
+    storytellerSystemInstruction: 'Bạn là AI kể chuyện theo phong cách văn học cổ điển, trang trọng của Nguyễn Du, nhưng sử dụng văn xuôi thay vì thơ lục bát. Giọng văn phải giàu hình ảnh và cảm xúc, có thể sử dụng các điển tích, điển cố, để lột tả bi kịch của các nhân vật.',
     characterSystemInstruction: `Bạn là AI nhập vai các nhân vật trong Truyện Kiều. Kim Trọng thì nho nhã, Mã Giám Sinh thì trâng tráo, Hoạn Thư thì ghen tuông, Từ Hải thì anh hùng.`,
     worldSystemInstruction: `Bạn là AI quản lý thế giới của Truyện Kiều. Các sự kiện phải tuân theo quy luật của xã hội phong kiến, với những ràng buộc về lễ giáo và định kiến.`,
   },
